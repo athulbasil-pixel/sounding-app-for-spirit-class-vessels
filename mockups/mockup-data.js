@@ -1,0 +1,96 @@
+// SYNTHETIC demo data only — not taken from any real vessel record.
+// Field ids mirror docs/field_registry.yaml.
+window.MOCK = {
+  vessel: "MV Demo Spirit (synthetic)",
+  shipDate: "2023-04-15",
+  watch: "0600-1200",
+  savedAt: "11:47",
+  sections: [
+    { id: "A", title: "Fuel counters", tag: "6h", fields: [
+      { id: "feeder_dg123_counter", label: "Feeder module DD/GG 1-2-3", sub: "Counter → consumption", unit: "Ltr", kind: "counter", prev: 999812, cur: 1204 },
+      { id: "feeder_dg456_counter", label: "Feeder module DD/GG 4-5-6", sub: "Counter → consumption", unit: "Ltr", kind: "counter", prev: 41220, cur: 41286 },
+      { id: "aft_boiler_hfo_counter", label: "Aft boiler HFO counter", unit: "Ltr", kind: "counter", prev: 512330, cur: 512338 },
+      { id: "fwd_boiler_hfo_counter", label: "Fwd boiler HFO counter", unit: "Ltr", kind: "counter", prev: 77015, cur: null },
+    ]},
+    { id: "B", title: "Fresh-water counters", tag: "6h", calc: "fw_total", fields: [
+      { id: "aft_evap_loc_counter", label: "Aft evaporator — LOC", unit: "m³", kind: "counter", prev: 31402, cur: 31488 },
+      { id: "aft_evap_ecr_counter", label: "Aft evaporator — ECR", unit: "m³", kind: "counter", prev: null, cur: null, unavailable: "Not in use — LOC counter used" },
+      { id: "fwd_evap_loc_counter", label: "Fwd evaporator — LOC", unit: "m³", kind: "counter", prev: 140110, cur: 140191 },
+      { id: "fwd_evap_ecr_counter", label: "Fwd evaporator — ECR", unit: "m³", kind: "counter", prev: null, cur: null, unavailable: "Not in use — LOC counter used" },
+      { id: "ro_ecr_counter", label: "Reverse osmosis — ECR", unit: "m³", kind: "counter", prev: 690420, cur: 690507 },
+    ]},
+    { id: "C", title: "Fresh water — 4-hour schedule", tag: "4h · slots 0400–0800 & 0800–1200", fields: [
+      { group: "Slot 0400–0800 · reading at 0800" },
+      { id: "aft_evap_loc_counter@s2", label: "Aft evaporator", sub: "prev = 0400 reading", unit: "m³", kind: "counter", prev: 31430, cur: 31459 },
+      { id: "fwd_evap_loc_counter@s2", label: "Fwd evaporator", sub: "prev = 0400 reading", unit: "m³", kind: "counter", prev: 140137, cur: 140164 },
+      { id: "ro_ecr_counter@s2", label: "Reverse osmosis", sub: "prev = 0400 reading", unit: "m³", kind: "counter", prev: 690449, cur: 690478 },
+      { group: "Slot 0800–1200 · reading at 1200 (taken from section B — stored once)" },
+      { id: "aft_evap_loc_counter@s3", label: "Aft evaporator", unit: "m³", kind: "counter", prev: 31459, linked: "aft_evap_loc_counter" },
+      { id: "fwd_evap_loc_counter@s3", label: "Fwd evaporator", unit: "m³", kind: "counter", prev: 140164, linked: "fwd_evap_loc_counter" },
+      { id: "ro_ecr_counter@s3", label: "Reverse osmosis", unit: "m³", kind: "counter", prev: 690478, linked: "ro_ecr_counter" },
+    ]},
+    { id: "D", title: "Aft purifiers, filter & feeder", tag: "cleaning cycles", fields: [
+      { id: "hfo_purifier_1_cycles", label: "HFO purifier 1", unit: "cycles", kind: "cycle", prev: 8412, cur: 8418 },
+      { id: "hfo_purifier_2_cycles", label: "HFO purifier 2", unit: "cycles", kind: "cycle", prev: 7990, cur: 7996 },
+      { id: "hfo_filtration_1_cycles", label: "HFO filtration 1", unit: "cycles", kind: "cycle", prev: 12004, cur: null },
+      { id: "feeder_dg123_cycles", label: "Feeder module DD/GG 1-2-3", unit: "cycles", kind: "cycle", prev: 3110, cur: 3114 },
+    ]},
+    { id: "E", title: "Aft fuel tanks", tag: "ECR / local levels", fields: [
+      { id: "hfo_service_aft_ecr", label: "HFO service tank — ECR", unit: "m³", kind: "level", prev: 128.4, cur: 126.9 },
+      { id: "hfo_service_aft_local", label: "HFO service tank — local", unit: "m³", kind: "level", prev: 129.0, cur: 127.2 },
+      { id: "hfo_settling_aft_ecr", label: "HFO settling tank — ECR", unit: "m³", kind: "level", prev: 6.1, cur: null },
+      { id: "hfo_settling_aft_local", label: "HFO settling tank — local", unit: "m³", kind: "level", prev: 6.3, cur: null },
+      { id: "do_service_aft_ecr", label: "DO service tank — ECR", unit: "m³", kind: "level", prev: 17.8, cur: 17.6 },
+      { id: "do_service_aft_local", label: "DO service tank — local", unit: "m³", kind: "level", prev: 17.9, cur: 17.7 },
+    ]},
+    { id: "F", title: "Fwd purifiers, filter & feeder", tag: "cleaning cycles", fields: [
+      { id: "hfo_purifier_3_cycles", label: "HFO purifier 3", unit: "cycles", kind: "cycle", prev: 6604, cur: 6610 },
+      { id: "hfo_purifier_4_cycles", label: "HFO purifier 4", unit: "cycles", kind: "cycle", prev: 5521, cur: 5521 },
+      { id: "hfo_filtrator_2_cycles", label: "HFO filtrator 2", unit: "cycles", kind: "cycle", prev: 10877, cur: 10881 },
+      { id: "feeder_dg456_cycles", label: "Feeder module DD/GG 4-5-6", unit: "cycles", kind: "cycle", prev: 2950, cur: 2953 },
+    ]},
+    { id: "G", title: "Fwd fuel tanks", tag: "ECR / local levels", fields: [
+      { id: "hfo_service_fwd_ecr", label: "HFO service tank — ECR", unit: "m³", kind: "level", prev: 71.2, cur: 70.4 },
+      { id: "hfo_service_fwd_local", label: "HFO service tank — local", unit: "m³", kind: "level", prev: 71.6, cur: 70.8 },
+      { id: "hfo_settling_fwd_ecr", label: "HFO settling tank — ECR", unit: "m³", kind: "level", prev: 12.9, cur: 12.9 },
+      { id: "hfo_settling_fwd_local", label: "HFO settling tank — local", unit: "m³", kind: "level", prev: 13.1, cur: 13.0 },
+      { id: "do_service_fwd_ecr", label: "DO service tank — ECR", unit: "m³", kind: "level", prev: 20.4, cur: 19.1 },
+      { id: "do_service_fwd_local", label: "DO service tank — local", unit: "m³", kind: "level", prev: 20.6, cur: 19.3 },
+    ]},
+    { id: "H", title: "Air compressors", tag: "running hours", fields: [
+      { group: "Service air system" },
+      { id: "sa_aft_operating_h", label: "Aft — operating", unit: "h", kind: "hours", prev: 86631, cur: 86635 },
+      { id: "sa_aft_loading_h", label: "Aft — loading", unit: "h", kind: "hours", prev: 40112, cur: 40114 },
+      { id: "sa_fwd_operating_h", label: "Forward — operating", unit: "h", kind: "hours", prev: 42900, cur: 42902 },
+      { id: "sa_fwd_loading_h", label: "Forward — loading", unit: "h", kind: "hours", prev: 18060, cur: 18061 },
+      { id: "sa_osmosis_operating_h", label: "Osmosis room — operating", unit: "h", kind: "hours", prev: 35210, cur: 35216 },
+      { id: "sa_osmosis_loading_h", label: "Osmosis room — loading", unit: "h", kind: "hours", prev: 19402, cur: null },
+      { group: "Control air system" },
+      { id: "ca_comp3_operating_h", label: "Control air comp 3 — operating", unit: "h", kind: "hours", prev: 23880, cur: 23884 },
+    ]},
+    { id: "J", title: "Starting air compressors", tag: "running hours", fields: [
+      { id: "start_air_1_h", label: "Starting air comp No. 1", unit: "h", kind: "hours", prev: 9120, cur: 9121 },
+      { id: "start_air_2_h", label: "Starting air comp No. 2", unit: "h", kind: "hours", prev: 6002, cur: 6002 },
+      { id: "start_air_3_h", label: "Starting air comp No. 3", unit: "h", kind: "hours", prev: 1410, cur: 1410 },
+    ]},
+    { id: "K", title: "DG 1–6 cleaning cycles", tag: "cycle counts", fields: [1,2,3,4,5,6].map(n => (
+      { id: `dg${n}_cycles`, label: `D/G No. ${n}`, unit: "cycles", kind: "cycle", prev: 90000 + n*1311, cur: n === 4 ? null : 90000 + n*1311 + 6 }
+    ))},
+    { id: "L", title: "DG lube-oil sump tanks", tag: "LOC. / DAM.", fields: [1,2,3,4,5,6].flatMap(n => ([
+      { id: `dg${n}_sump_loc`, label: `D/G No. ${n} — LOC.`, unit: null, kind: "sounding", prev: 70 + (n % 3), cur: n === 2 ? "74+" : 70 + (n % 3) + 1 },
+      { id: `dg${n}_sump_dam`, label: `D/G No. ${n} — DAM.`, unit: null, kind: "sounding", prev: null, cur: null },
+    ]))},
+    { id: "M", title: "Sounding table", tag: "M4 · M5 · M8 · GS · LT · HT", calc: "m4_total", fields: [
+      { id: "m4_1", label: "M4.1", unit: null, kind: "sounding", prev: 20.8, cur: 21.0 },
+      { id: "m4_2", label: "M4.2", unit: null, kind: "sounding", prev: 48.0, cur: null },
+      { id: "m4_3", label: "M4.3", unit: null, kind: "sounding", prev: 7.4, cur: 7.5 },
+      { id: "m5", label: "M5", unit: "cm", kind: "sounding", prev: 121, cur: 118 },
+      { id: "m8", label: "M8", unit: "cm", kind: "sounding", prev: 0, cur: 0 },
+      { id: "gs", label: "GS", unit: null, kind: "sounding", prev: 805, cur: 800 },
+      { id: "aft_lt", label: "AFT LT", unit: null, kind: "sounding", prev: 790, cur: 785 },
+      { id: "fwd_lt", label: "FWD LT", unit: null, kind: "sounding", prev: 760, cur: 760 },
+      { id: "aft_ht", label: "AFT HT", unit: null, kind: "sounding", prev: 1140, cur: 1160 },
+      { id: "fwd_ht", label: "FWD HT", unit: null, kind: "sounding", prev: 1205, cur: 1190 },
+    ]},
+  ],
+};

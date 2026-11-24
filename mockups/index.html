@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watch board · MarineSense Watch Log (mockup)</title>
+<link rel="stylesheet" href="mockup.css">
+<script src="mockup-data.js"></script>
+<script src="mockup.js"></script>
+</head>
+<body data-page="board">
+<header class="brandbar"></header>
+
+<div class="context">
+  <div>
+    <div class="lbl">Ship date</div>
+    <div class="datebox">
+      <button class="btn sq" title="Previous day">‹</button>
+      <input type="date" value="2023-04-15" aria-label="Ship date">
+      <button class="btn sq" title="Next day">›</button>
+      <button class="btn">Today (ship)</button>
+    </div>
+  </div>
+  <div class="muted" style="font-size:13px;max-width:420px">
+    Ship date and watch are chosen here, never taken from the PC clock.
+    The 1800–2400 watch is filed under the date it began.
+  </div>
+</div>
+
+<main class="page">
+  <h1 class="pagetitle">Saturday 15 April 2023 · 4 watches</h1>
+  <div class="board">
+    <section class="plate tile">
+      <div class="plate-head" style="margin:0 8px"><h2>Watch 1</h2></div>
+      <div class="time mono">0000–0600</div>
+      <div class="state"><span class="lamp green"></span><b>Closed</b> · 06:12</div>
+      <div class="meta">2/E (synthetic) · 0 missing</div>
+      <div class="actions"><a class="btn" href="history.html" style="display:inline-flex;align-items:center;text-decoration:none">Open record</a><button class="btn">PDF</button></div>
+    </section>
+    <section class="plate tile current">
+      <div class="plate-head" style="margin:0 8px"><h2>Watch 2</h2><span class="right">CURRENT</span></div>
+      <div class="time mono">0600–1200</div>
+      <div class="state"><span class="lamp amber"></span><b>Draft</b> · saved 11:47</div>
+      <div class="meta">54/68 entered · 9 missing · 1 for review</div>
+      <div class="actions"><a class="btn primary" href="entry.html" style="display:inline-flex;align-items:center;text-decoration:none">Resume draft ›</a></div>
+    </section>
+    <section class="plate tile">
+      <div class="plate-head" style="margin:0 8px"><h2>Watch 3</h2></div>
+      <div class="time mono">1200–1800</div>
+      <div class="state"><span class="lamp grey"></span><b>Not started</b></div>
+      <div class="meta">Previous readings will carry from watch 2</div>
+      <div class="actions"><button class="btn">Start watch</button></div>
+    </section>
+    <section class="plate tile">
+      <div class="plate-head" style="margin:0 8px"><h2>Watch 4</h2></div>
+      <div class="time mono">1800–2400</div>
+      <div class="state"><span class="lamp grey"></span><b>Not started</b></div>
+      <div class="meta">Carries forward to 16 Apr 0000–0600</div>
+      <div class="actions"><button class="btn">Start watch</button></div>
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="plate">
+      <div class="plate-head"><h2>Fresh water · 4-hour schedule</h2><span class="tag">stored once</span></div>
+      <div class="slots">
+        <div class="slot"><span class="mono">0000–0400</span><span class="lamp green"></span><div class="muted">W1</div></div>
+        <div class="slot"><span class="mono">0400–0800</span><span class="lamp green"></span><div class="muted">W2</div></div>
+        <div class="slot"><span class="mono">0800–1200</span><span class="lamp green"></span><div class="muted">= W2 reading</div></div>
+        <div class="slot"><span class="mono">1200–1600</span><span class="lamp grey"></span><div class="muted">W3</div></div>
+        <div class="slot"><span class="mono">1600–2000</span><span class="lamp grey"></span><div class="muted">W4</div></div>
+        <div class="slot"><span class="mono">2000–2400</span><span class="lamp grey"></span><div class="muted">= W4 reading</div></div>
+      </div>
+      <p class="muted" style="font-size:13px;margin:12px 8px 0">FW production today so far: <b class="mono" style="color:var(--text)">512 m³</b> · incomplete (2 of 6 slots open)</p>
+    </section>
+    <section class="plate">
+      <div class="plate-head"><h2>Compressors · last completed watch</h2><span class="tag">15 Apr 0000–0600</span></div>
+      <div class="kv">
+        <span>Service air Aft</span><span class="mono">6 h op</span><span class="mono muted">3 h load</span>
+        <span>Service air Fwd</span><span class="mono">2 h op</span><span class="mono muted">1 h load</span>
+        <span>Osmosis room</span><span class="mono">6 h op</span><span class="mono muted">2 h load</span>
+        <span>Control air comp 3</span><span class="mono">4 h op</span><span class="mono muted">—</span>
+        <span>Starting air 1 / 2 / 3</span><span class="mono">1 / 0 / 0 h</span><span></span>
+      </div>
+      <p style="margin:12px 8px 0"><a href="#">Day · week · month totals → Reports</a></p>
+    </section>
+  </div>
+</main>
+</body>
+</html>

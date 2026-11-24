@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>History · MarineSense Watch Log (mockup)</title>
+<link rel="stylesheet" href="mockup.css">
+<script src="mockup-data.js"></script>
+<script src="mockup.js"></script>
+</head>
+<body data-page="history">
+<header class="brandbar"></header>
+<div class="context">
+  <label class="field">From <input type="date" value="2023-04-10"></label>
+  <label class="field">To <input type="date" value="2023-04-15"></label>
+  <label class="field">Watch <select><option>All watches</option><option>0000–0600</option><option>0600–1200</option><option>1200–1800</option><option>1800–2400</option></select></label>
+  <label class="field">Status <select><option>All</option><option>Closed</option><option>Draft</option><option>Corrected</option><option>Has missing</option></select></label>
+  <button class="btn" style="align-self:flex-end">Search</button>
+</div>
+
+<main class="page">
+  <div class="grid2" style="margin-top:0;grid-template-columns:1fr 1.15fr">
+    <section class="plate">
+      <div class="plate-head"><h2>Watch records · 22</h2></div>
+      <table class="log">
+        <tr><th></th><th>Ship date</th><th>Watch</th><th>Officer</th><th>Missing</th><th></th></tr>
+        <tr><td><span class="lamp amber"></span></td><td class="mono">2023-04-15</td><td class="mono">0600–1200</td><td class="muted">—</td><td>9</td><td><span class="badge">draft</span></td></tr>
+        <tr><td><span class="lamp green"></span></td><td class="mono">2023-04-15</td><td class="mono">0000–0600</td><td>2/E Demo</td><td>0</td><td></td></tr>
+        <tr class="sel"><td><span class="lamp green"></span></td><td class="mono">2023-04-14</td><td class="mono">1800–2400</td><td>3/E Sample</td><td>1</td><td><span class="badge corr">corrected v2</span></td></tr>
+        <tr><td><span class="lamp green"></span></td><td class="mono">2023-04-14</td><td class="mono">1200–1800</td><td>2/E Demo</td><td>0</td><td></td></tr>
+        <tr><td><span class="lamp green"></span></td><td class="mono">2023-04-14</td><td class="mono">0600–1200</td><td>2/E Demo</td><td>0</td><td></td></tr>
+        <tr><td><span class="lamp amber"></span></td><td class="mono">2023-04-14</td><td class="mono">0000–0600</td><td>3/E Sample</td><td>3</td><td></td></tr>
+        <tr><td colspan="6" class="muted">… 16 more</td></tr>
+      </table>
+    </section>
+
+    <section class="plate">
+      <div class="plate-head"><h2>14 Apr 2023 · 1800–2400</h2><span class="badge corr">v2 of 2</span>
+        <span class="right"><button class="btn" style="min-height:36px">Open PDF</button><button class="btn" style="min-height:36px">Download</button><button class="btn" style="min-height:36px">Correct…</button></span></div>
+      <div class="banner"><b>Corrected</b> 15 Apr 2023 06:40 by 2/E Demo — “M5 sounding mis-typed (181 → 118)”. <a href="#">View original v1</a></div>
+      <div class="kv" style="grid-template-columns:auto 1fr;margin:0 8px 14px">
+        <span class="muted">Closed</span><span>14 Apr 2023 23:58 · 3/E Sample (synthetic)</span>
+        <span class="muted">Remarks</span><span>Purifier 4 stopped 2100 for bowl cleaning (synthetic).</span>
+      </div>
+      <table class="log">
+        <tr><th>Equipment</th><th style="text-align:right">Reading</th><th style="text-align:right">Diff</th><th></th></tr>
+        <tr><td>Service air Aft — operating</td><td class="mono" style="text-align:right">86 631</td><td class="mono" style="text-align:right">+6 h</td><td><span class="lamp green"></span></td></tr>
+        <tr><td>Feeder DD/GG 4-5-6</td><td class="mono" style="text-align:right">41 220</td><td class="mono" style="text-align:right">+58 Ltr</td><td><span class="lamp green"></span></td></tr>
+        <tr><td>HFO purifier 4 cycles</td><td class="mono" style="text-align:right">5 521</td><td class="mono" style="text-align:right">+3 cyc</td><td><span class="lamp green"></span></td></tr>
+        <tr><td>M5</td><td class="mono" style="text-align:right">118 cm <span class="badge corr">v2</span></td><td class="mono" style="text-align:right">—</td><td><span class="lamp green"></span></td></tr>
+        <tr><td>M4 TOTAL</td><td class="mono" style="text-align:right">76.2</td><td class="mono muted" style="text-align:right">calc</td><td><span class="lamp green"></span></td></tr>
+        <tr><td>D/G No. 2 — DAM.</td><td class="mono" style="text-align:right;color:var(--lamp-amber)">MISSING</td><td class="mono" style="text-align:right">—</td><td><span class="lamp amber"></span></td></tr>
+        <tr><td colspan="4" class="muted">… all 68 fields, grouped by section A–M</td></tr>
+      </table>
+      <p class="muted" style="font-size:12px;margin:12px 8px 0">PDF: <span class="mono">2023-04-14_1800-2400_Watch_Log_v2.pdf</span></p>
+    </section>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review &amp; close · MarineSense Watch Log (mockup)</title>
+<link rel="stylesheet" href="mockup.css">
+<script src="mockup-data.js"></script>
+<script src="mockup.js"></script>
+</head>
+<body data-page="entry">
+<header class="brandbar"></header>
+<div class="context">
+  <a class="btn" href="entry.html" style="display:inline-flex;align-items:center;text-decoration:none">‹ Back to entry</a>
+  <div style="font-size:16px"><b>Review &amp; close</b> · <span class="mono">15 Apr 2023 · 0600–1200</span></div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="lamp amber"></span>Draft · saved 11:47</div>
+</div>
+
+<main class="page" style="max-width:1100px">
+  <div class="grid2" style="margin-top:0;grid-template-columns:1.4fr 1fr">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <section class="plate">
+        <div class="plate-head"><span class="lamp red"></span><h2>For review · 1</h2></div>
+        <table class="log">
+          <tr><th>Section</th><th>Equipment</th><th>Previous → current</th><th></th></tr>
+          <tr><td>A</td><td>Feeder module DD/GG 1-2-3</td><td class="mono">999 812 → 1 204</td>
+            <td><button class="btn" style="min-height:34px">Rollover</button> <a href="entry.html#sec-A">Fix ›</a></td></tr>
+        </table>
+      </section>
+
+      <section class="plate">
+        <div class="plate-head"><span class="lamp grey"></span><h2>Missing · 9</h2><span class="right">fill, mark unavailable, or leave as missing</span></div>
+        <table class="log">
+          <tr><th>Sec</th><th>Equipment</th><th>Action</th></tr>
+          <tr><td>A</td><td>Fwd boiler HFO counter</td><td><select class="btn" style="min-height:34px"><option>Leave missing</option><option>Unavailable: boiler off</option><option>Unavailable: meter fault</option><option>Unavailable: other…</option></select> <a href="entry.html#sec-A">Enter ›</a></td></tr>
+          <tr><td>D</td><td>HFO filtration 1</td><td><select class="btn" style="min-height:34px"><option>Leave missing</option><option>Unavailable…</option></select> <a href="#">Enter ›</a></td></tr>
+          <tr><td>E</td><td>HFO settling tank Aft — ECR</td><td><select class="btn" style="min-height:34px"><option>Leave missing</option><option>Unavailable…</option></select> <a href="#">Enter ›</a></td></tr>
+          <tr><td>E</td><td>HFO settling tank Aft — local</td><td><select class="btn" style="min-height:34px"><option>Leave missing</option><option>Unavailable…</option></select> <a href="#">Enter ›</a></td></tr>
+          <tr><td>H</td><td>Osmosis room — loading hours</td><td><select class="btn" style="min-height:34px"><option>Leave missing</option><option>Unavailable…</option></select> <a href="#">Enter ›</a></td></tr>
+          <tr><td>K</td><td>D/G No. 4 cleaning cycles</td><td><select class="btn" style="min-height:34px"><option>Leave missing</option><option>Unavailable: DG under maintenance</option></select> <a href="#">Enter ›</a></td></tr>
+          <tr><td>M</td><td>M4.2 <span class="muted">(M4 TOTAL will be incomplete)</span></td><td><select class="btn" style="min-height:34px"><option>Leave missing</option><option>Unavailable…</option></select> <a href="#">Enter ›</a></td></tr>
+          <tr><td colspan="3" class="muted">+ 2 more (L · DAM. readings)</td></tr>
+        </table>
+      </section>
+    </div>
+
+    <section class="plate" style="align-self:start;position:sticky;top:140px">
+      <div class="plate-head"><h2>Close watch</h2></div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding:0 8px">
+        <label class="field">Responsible officer
+          <select><option>— select —</option><option>2/E Demo Officer (synthetic)</option><option>3/E Sample Officer (synthetic)</option></select></label>
+        <label class="field">Closure time (ship time)
+          <input class="mono" value="2023-04-15 12:04"></label>
+        <label class="field">Remarks
+          <textarea rows="3">FWD boiler off-line for maintenance (synthetic).</textarea></label>
+        <label style="display:flex;gap:10px;align-items:flex-start;font-size:14px">
+          <input type="checkbox" style="width:22px;height:22px"> I confirm the remaining 9 readings are missing for this watch.</label>
+        <button class="btn primary" disabled title="Resolve the review item first">Close watch &amp; generate PDF</button>
+        <p class="muted" style="font-size:12px;margin:0">After closing, the record is locked. Corrections create version 2 with a reason; the original is kept.</p>
+      </div>
+    </section>
+  </div>
+</main>
+</body>
+</html>

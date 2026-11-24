@@ -1,0 +1,247 @@
+# MarineSense Engine Room Watch Log - Spirit class
+# Field registry (Phase 0, draft for approval)
+#
+# Single source of truth for entry screens, calculations, reports and PDFs.
+# Derived from the "Model" sheet and populated "Day N" sheets of the monthly
+# sounding/watch workbook (read in place, never committed).
+#
+# Cell references:
+#   day_cells   = layout on populated Day sheets (authoritative for the crew)
+#   model_cells = layout on the Model template, where it differs
+#   Columns per 6h watch on day sheets: see each section's `watch_columns`.
+#
+# kind:
+#   counter        cumulative meter; app derives difference between consecutive valid readings
+#   hours_counter  cumulative running-hours meter (difference = hours)
+#   cycle_counter  cumulative cleaning-cycle count (difference = cycles; NOT hours)
+#   level          instantaneous tank level, no difference calculated
+#   sounding       instantaneous sounding/reading, no difference calculated
+#
+# unit_status:
+#   stated    unit printed in the workbook next to the field
+#   inferred  unit printed only on the derived row (e.g. CONSUMPTION (Ltr))
+#   unconfirmed  no unit in workbook; to be confirmed onboard
+
+version: 0.1
+vessel_class: Spirit
+
+watches:
+  - {id: w1, label: "0000-0600", starts: "00:00", ends: "06:00", day_row_offset: 0}
+  - {id: w2, label: "0600-1200", starts: "06:00", ends: "12:00", day_row_offset: 1}
+  - {id: w3, label: "1200-1800", starts: "12:00", ends: "18:00", day_row_offset: 2}
+  - {id: w4, label: "1800-2400", starts: "18:00", ends: "24:00", day_row_offset: 3}
+# The 1800-2400 watch is filed under the ship date on which it began.
+
+fresh_water_slots:
+  # Separate 4-hour schedule (workbook columns Q..W, rows 3-9).
+  # Reading is taken at the END of each slot and is filed in the 6h watch that contains that time.
+  - {id: s1, label: "0000-0400", reading_at: "04:00", entered_in: w1, source: own_input,        day_col: R}
+  - {id: s2, label: "0400-0800", reading_at: "08:00", entered_in: w2, source: own_input,        day_col: S}
+  - {id: s3, label: "0800-1200", reading_at: "12:00", entered_in: w2, source: watch_reading_w2, day_col: T}
+  - {id: s4, label: "1200-1600", reading_at: "16:00", entered_in: w3, source: own_input,        day_col: U}
+  - {id: s5, label: "1600-2000", reading_at: "20:00", entered_in: w4, source: own_input,        day_col: V}
+  - {id: s6, label: "2000-2400", reading_at: "24:00", entered_in: w4, source: watch_reading_w4, day_col: W}
+# s3 and s6 REUSE the 6h watch readings (workbook: T4 = H11, W4 = J11). Store once.
+# Slot s1 baseline = previous day's 2400 reading (workbook: Q4 = F11).
+
+sections:
+
+  - id: A
+    title: "Fuel counters"
+    workbook_block: "rows 3-10, cols F (prev) G-J (watches) K (total)"
+    watch_columns: {prev: F, w1: G, w2: H, w3: I, w4: J, day_total: K}
+    signature: none
+    fields:
+      - {id: feeder_dg123_counter, label: "Feeder module DD/GG No. 1-2-3 counter", kind: counter, unit: Ltr, unit_status: inferred, day_row: 3,
+         derived: {id: feeder_dg123_consumption, label: "Consumption", unit: Ltr, day_row: 4},
+         note: "Sampled data shows a drop from near 1 000 000 to a small value between days: rollover or meter reset must be handled."}
+      - {id: feeder_dg456_counter, label: "Feeder module DD/GG No. 4-5-6 counter", kind: counter, unit: Ltr, unit_status: inferred, day_row: 5,
+         derived: {id: feeder_dg456_consumption, label: "Consumption", unit: Ltr, day_row: 6}}
+      - {id: aft_boiler_hfo_counter, label: "Aft boiler HFO counter", kind: counter, unit: Ltr, unit_status: inferred, day_row: 7,
+         derived: {id: aft_boiler_hfo_consumption, label: "HFO consumption", unit: Ltr, day_row: 8}}
+      - {id: fwd_boiler_hfo_counter, label: "Fwd boiler HFO counter", kind: counter, unit: Ltr, unit_status: inferred, day_row: 9,
+         derived: {id: fwd_boiler_hfo_consumption, label: "HFO consumption", unit: Ltr, day_row: 10}}
+
+  - id: B
+    title: "Fresh-water counters"
+    workbook_block: "rows 11-22, cols F (prev) G-J (watches) K (total)"
+    watch_columns: {prev: F, w1: G, w2: H, w3: I, w4: J, day_total: K}
+    signature: none
+    fields:
+      - {id: aft_evap_loc_counter, label: "Aft evaporator LOC counter", kind: counter, unit: "m³", unit_status: inferred, day_row: 11,
+         derived: {id: aft_evap_loc_production, label: "Production", unit: "m³", day_row: 12}, fw_schedule: true}
+      - {id: aft_evap_ecr_counter, label: "Aft evaporator ECR counter", kind: counter, unit: "m³", unit_status: inferred, day_row: 13,
+         derived: {id: aft_evap_ecr_production, label: "Production", unit: "m³", day_row: 14},
+         note: "Empty on sampled days; LOC counter is the one used in totals."}
+      - {id: fwd_evap_loc_counter, label: "Fwd evaporator LOC counter", kind: counter, unit: "m³", unit_status: inferred, day_row: 15,
+         derived: {id: fwd_evap_loc_production, label: "Production", unit: "m³", day_row: 16}, fw_schedule: true}
+      - {id: fwd_evap_ecr_counter, label: "Fwd evaporator ECR counter", kind: counter, unit: "m³", unit_status: inferred, day_row: 17,
+         derived: {id: fwd_evap_ecr_production, label: "Production", unit: "m³", day_row: 18}}
+      - {id: ro_ecr_counter, label: "Reverse osmosis ECR counter", kind: counter, unit: "m³", unit_status: inferred, day_row: 19,
+         derived: {id: ro_production, label: "Production", unit: "m³", day_row: 20}, fw_schedule: true}
+    calculated:
+      - {id: fw_total_production, label: "Total production", unit: "m³", day_row: 22,
+         formula: "aft_evap_loc_production + fwd_evap_loc_production + ro_production",
+         note: "Workbook G22 = G12+G16+G20 (ECR rows excluded)."}
+
+  - id: C
+    title: "Fresh-water production - 4-hour schedule"
+    workbook_block: "rows 3-9, cols Q (prev) R-W (slots)"
+    schedule: fresh_water_slots
+    signature: none
+    fields:
+      # Rows: odd = counter, even = production; counters only for own_input slots.
+      - {id: aft_evap_loc_counter, label: "Aft evap counter", kind: counter, unit: "m³", unit_status: inferred, day_row: 4, production_row: 5}
+      - {id: fwd_evap_loc_counter, label: "Fwd evap counter", kind: counter, unit: "m³", unit_status: inferred, day_row: 6, production_row: 7}
+      - {id: ro_ecr_counter,       label: "Reverse osmosis counter", kind: counter, unit: "m³", unit_status: inferred, day_row: 8, production_row: 9}
+    note: >
+      Same physical meters as section B. Each slot reading is stored once and
+      keyed (field, ship_date, slot). Sampled real data left s1/s2 blank and the
+      workbook produced large negative productions; the app must treat blanks as missing.
+
+  - id: D
+    title: "Aft purifiers, filter & feeder - cleaning cycles"
+    workbook_block: "rows 26-35 (BEGIN row 30, watches 31-34, TOTAL 35)"
+    watch_rows: {begin: 30, w1: 31, w2: 32, w3: 33, w4: 34, day_total: 35}
+    signature: "Engine officer signature (L26)"
+    fields:
+      - {id: hfo_purifier_1_cycles,   label: "HFO purifier 1",            kind: cycle_counter, unit: cycles, unit_status: stated, total_col: C, partial_col: D}
+      - {id: hfo_purifier_2_cycles,   label: "HFO purifier 2",            kind: cycle_counter, unit: cycles, unit_status: stated, total_col: E, partial_col: F}
+      - {id: hfo_filtration_1_cycles, label: "HFO filtration 1",          kind: cycle_counter, unit: cycles, unit_status: stated, total_col: G, partial_col: H}
+      - {id: feeder_dg123_cycles,     label: "Feeder module DD/GG 1-2-3", kind: cycle_counter, unit: cycles, unit_status: stated, total_col: I, partial_col: J}
+
+  - id: E
+    title: "Aft fuel tanks - ECR / local levels"
+    workbook_block: "rows 38-47, cols E-H = w1..w4"
+    watch_columns: {w1: E, w2: F, w3: G, w4: H}
+    signature: "Engine officer's signature (A49)"
+    fields:
+      - {id: hfo_service_aft_ecr,   label: "HFO service tk Aft - ECR level",   kind: level, unit: "m³", unit_status: stated, day_row: 40}
+      - {id: hfo_service_aft_local, label: "HFO service tk Aft - local level", kind: level, unit: "m³", unit_status: stated, day_row: 41}
+      - {id: hfo_settling_aft_ecr,  label: "HFO settling tk Aft - ECR level",  kind: level, unit: "m³", unit_status: stated, day_row: 43}
+      - {id: hfo_settling_aft_local,label: "HFO settling tk Aft - local level",kind: level, unit: "m³", unit_status: stated, day_row: 44}
+      - {id: do_service_aft_ecr,    label: "DO service tk Aft - ECR level",    kind: level, unit: "m³", unit_status: stated, day_row: 46}
+      - {id: do_service_aft_local,  label: "DO service tk Aft - local level",  kind: level, unit: "m³", unit_status: stated, day_row: 47}
+
+  - id: F
+    title: "Fwd purifiers, filter & feeder - cleaning cycles"
+    workbook_block: "rows 53-62 (BEGIN row 57, watches 58-61, TOTAL 62)"
+    watch_rows: {begin: 57, w1: 58, w2: 59, w3: 60, w4: 61, day_total: 62}
+    signature: "Engine officer signature (L53)"
+    fields:
+      - {id: hfo_purifier_3_cycles,   label: "HFO purifier 3",            kind: cycle_counter, unit: cycles, unit_status: stated, total_col: C, partial_col: D}
+      - {id: hfo_purifier_4_cycles,   label: "HFO purifier 4",            kind: cycle_counter, unit: cycles, unit_status: stated, total_col: E, partial_col: F}
+      - {id: hfo_filtrator_2_cycles,  label: "HFO filtrator 2",           kind: cycle_counter, unit: cycles, unit_status: stated, total_col: G, partial_col: H}
+      - {id: feeder_dg456_cycles,     label: "Feeder module DD/GG 4-5-6", kind: cycle_counter, unit: cycles, unit_status: stated, total_col: I, partial_col: J}
+
+  - id: G
+    title: "Fwd fuel tanks - ECR / local levels"
+    workbook_block: "rows 65-74, cols E-H = w1..w4"
+    watch_columns: {w1: E, w2: F, w3: G, w4: H}
+    signature: "Engine officer's initials (A76)"
+    fields:
+      - {id: hfo_service_fwd_ecr,   label: "HFO service tk Fwd - ECR level",   kind: level, unit: "m³", unit_status: stated, day_row: 67}
+      - {id: hfo_service_fwd_local, label: "HFO service tk Fwd - local level", kind: level, unit: "m³", unit_status: stated, day_row: 68}
+      - {id: hfo_settling_fwd_ecr,  label: "HFO settling tk Fwd - ECR level",  kind: level, unit: "m³", unit_status: stated, day_row: 70}
+      - {id: hfo_settling_fwd_local,label: "HFO settling tk Fwd - local level",kind: level, unit: "m³", unit_status: stated, day_row: 71}
+      - {id: do_service_fwd_ecr,    label: "DO service tk Fwd - ECR level",    kind: level, unit: "m³", unit_status: stated, day_row: 73}
+      - {id: do_service_fwd_local,  label: "DO service tk Fwd - local level",  kind: level, unit: "m³", unit_status: stated, day_row: 74}
+
+  - id: H
+    title: "Air compressors - running hours"
+    workbook_block: "rows 81-94 (BEGIN row 87, watches 88-91, TOTAL 92, daily 94)"
+    watch_rows: {begin: 87, w1: 88, w2: 89, w3: 90, w4: 91, day_total: 92}
+    signature: none
+    groups:
+      - {id: service_air, label: "Service air system"}
+      - {id: control_air, label: "Control air system"}
+    fields:
+      - {id: sa_aft_operating_h,     group: service_air, label: "Aft - operating hours",          kind: hours_counter, unit: h, unit_status: stated, total_col: B, partial_col: C}
+      - {id: sa_aft_loading_h,       group: service_air, label: "Aft - loading hours",            kind: hours_counter, unit: h, unit_status: stated, total_col: D, partial_col: E}
+      - {id: sa_fwd_operating_h,     group: service_air, label: "Forward - operating hours",      kind: hours_counter, unit: h, unit_status: stated, total_col: F, partial_col: G}
+      - {id: sa_fwd_loading_h,       group: service_air, label: "Forward - loading hours",        kind: hours_counter, unit: h, unit_status: stated, total_col: H, partial_col: I}
+      - {id: sa_osmosis_operating_h, group: service_air, label: "Osmosis room - operating hours", kind: hours_counter, unit: h, unit_status: stated, total_col: J, partial_col: K}
+      - {id: sa_osmosis_loading_h,   group: service_air, label: "Osmosis room - loading hours",   kind: hours_counter, unit: h, unit_status: stated, total_col: L, partial_col: M}
+      - {id: ca_comp3_operating_h,   group: control_air, label: "Control air comp 3 - operating hours", kind: hours_counter, unit: h, unit_status: stated, total_col: N, partial_col: O,
+         note: "Workbook records operating hours only for this machine."}
+    calculated:
+      - {id: sa_daily_operating_h, label: "Total daily running hours (operating)", formula: "sa_aft_operating_h + sa_fwd_operating_h", cell: G94,
+         note: "Workbook excludes the osmosis-room compressor from this total. Confirm onboard."}
+      - {id: sa_daily_loading_h,   label: "Total daily running hours (loading)",   formula: "sa_aft_loading_h + sa_fwd_loading_h",     cell: I94}
+
+  - id: J
+    title: "Starting air compressors - running hours"
+    workbook_block: "rows 96-107 (BEGIN row 100, watches 101-104, TOTAL 105, daily G107)"
+    watch_rows: {begin: 100, w1: 101, w2: 102, w3: 103, w4: 104, day_total: 105}
+    signature: "Engine officer's signature (N98)"
+    fields:
+      - {id: start_air_1_h, label: "Starting air compressor No. 1", kind: hours_counter, unit: h, unit_status: stated, total_col: B, partial_col: C, model_partial_col: E}
+      - {id: start_air_2_h, label: "Starting air compressor No. 2", kind: hours_counter, unit: h, unit_status: stated, total_col: F, partial_col: G, model_partial_col: I}
+      - {id: start_air_3_h, label: "Starting air compressor No. 3", kind: hours_counter, unit: h, unit_status: stated, total_col: J, partial_col: K, model_partial_col: M}
+    calculated:
+      - {id: start_air_daily_h, label: "Total daily running hours", formula: "start_air_1_h + start_air_2_h + start_air_3_h", cell: G107}
+
+  - id: K
+    title: "DG 1-6 - cleaning cycles"
+    workbook_block: "rows 110-120 (BEGIN row 115, watches 116-119, TOTAL 120)"
+    watch_rows: {begin: 115, w1: 116, w2: 117, w3: 118, w4: 119, day_total: 120}
+    signature: "Engine officer's signature (N112)"
+    fields:
+      - {id: dg1_cycles, label: "D/G No. 1", kind: cycle_counter, unit: cycles, unit_status: stated, total_col: B, partial_col: C}
+      - {id: dg2_cycles, label: "D/G No. 2", kind: cycle_counter, unit: cycles, unit_status: stated, total_col: D, partial_col: E}
+      - {id: dg3_cycles, label: "D/G No. 3", kind: cycle_counter, unit: cycles, unit_status: stated, total_col: F, partial_col: G}
+      - {id: dg4_cycles, label: "D/G No. 4", kind: cycle_counter, unit: cycles, unit_status: stated, total_col: H, partial_col: I}
+      - {id: dg5_cycles, label: "D/G No. 5", kind: cycle_counter, unit: cycles, unit_status: stated, total_col: J, partial_col: K}
+      - {id: dg6_cycles, label: "D/G No. 6", kind: cycle_counter, unit: cycles, unit_status: stated, total_col: L, partial_col: M}
+    note: "Cycle counts only. DG running hours are deferred until confirmed onboard."
+
+  - id: L
+    title: "DG lube-oil sump tanks - LOC. / DAM."
+    workbook_block: "rows 122-141, cols D/F/H/J = w1..w4"
+    watch_columns: {w1: D, w2: F, w3: H, w4: J}
+    signature: none
+    fields:
+      - {id: dg1_sump_loc, label: "D/G No. 1 - LOC.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 124}
+      - {id: dg1_sump_dam, label: "D/G No. 1 - DAM.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 126}
+      - {id: dg2_sump_loc, label: "D/G No. 2 - LOC.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 127}
+      - {id: dg2_sump_dam, label: "D/G No. 2 - DAM.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 129}
+      - {id: dg3_sump_loc, label: "D/G No. 3 - LOC.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 130}
+      - {id: dg3_sump_dam, label: "D/G No. 3 - DAM.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 132}
+      - {id: dg4_sump_loc, label: "D/G No. 4 - LOC.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 133}
+      - {id: dg4_sump_dam, label: "D/G No. 4 - DAM.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 135}
+      - {id: dg5_sump_loc, label: "D/G No. 5 - LOC.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 136}
+      - {id: dg5_sump_dam, label: "D/G No. 5 - DAM.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 138}
+      - {id: dg6_sump_loc, label: "D/G No. 6 - LOC.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 139}
+      - {id: dg6_sump_dam, label: "D/G No. 6 - DAM.", kind: sounding, unit: null, unit_status: unconfirmed, day_row: 141}
+    note: >
+      Crew wrote qualifiers such as "NN+" in sampled data. Store the numeric part
+      and a qualifier (+ / - / ~) separately so the raw entry is preserved.
+      DAM. rows were empty on sampled days.
+
+  - id: M
+    title: "Sounding table"
+    workbook_block: "Day sheets rows 143-150 (Model rows 144-151); header row 146 (Model 147)"
+    watch_rows: {w1: 147, w2: 148, w3: 149, w4: 150}
+    model_watch_rows: {w1: 148, w2: 149, w3: 150, w4: 151}
+    signature: none
+    fields:
+      - {id: m4_1,   label: "M4.1",   kind: sounding, unit: null, unit_status: unconfirmed, col: C}
+      - {id: m4_2,   label: "M4.2",   kind: sounding, unit: null, unit_status: unconfirmed, col: D}
+      - {id: m4_3,   label: "M4.3",   kind: sounding, unit: null, unit_status: unconfirmed, col: E}
+      - {id: m5,     label: "M5",     kind: sounding, unit: cm,   unit_status: stated,      col: G}
+      - {id: m8,     label: "M8",     kind: sounding, unit: cm,   unit_status: stated,      col: H}
+      - {id: gs,     label: "GS",     kind: sounding, unit: null, unit_status: unconfirmed, col: I}
+      - {id: aft_lt, label: "AFT LT", kind: sounding, unit: null, unit_status: unconfirmed, col: J}
+      - {id: fwd_lt, label: "FWD LT", kind: sounding, unit: null, unit_status: unconfirmed, col: K}
+      - {id: aft_ht, label: "AFT HT", kind: sounding, unit: null, unit_status: unconfirmed, col: L}
+      - {id: fwd_ht, label: "FWD HT", kind: sounding, unit: null, unit_status: unconfirmed, col: M}
+    calculated:
+      - {id: m4_total, label: "M4 TOTAL", col: F, formula: "m4_1 + m4_2 + m4_3",
+         rule: "Only when all three components are present; explicit 0 counts; empty = missing -> total incomplete.",
+         note: "Model sheet has the formula only on the first two watch rows; day sheets have it on all four."}
+
+deferred:
+  - DG running hours
+  - Sludge generation
+  - Tank-volume conversions (soundings -> m³)
+  - Units for M4.x, GS, LT/HT, DG sump LOC/DAM (confirm onboard)

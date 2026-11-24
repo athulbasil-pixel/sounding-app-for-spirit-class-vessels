@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watch entry · MarineSense Watch Log (mockup)</title>
+<link rel="stylesheet" href="mockup.css">
+<script src="mockup-data.js"></script>
+<script src="mockup.js"></script>
+</head>
+<body data-page="entry">
+<header class="brandbar"></header>
+
+<div class="context">
+  <div>
+    <div class="lbl">Ship date</div>
+    <div class="datebox">
+      <button class="btn sq" title="Previous day">‹</button>
+      <input type="date" value="2023-04-15" aria-label="Ship date">
+      <button class="btn sq" title="Next day">›</button>
+    </div>
+  </div>
+  <div>
+    <div class="lbl">Watch</div>
+    <div class="watch-seg" role="group" aria-label="Watch">
+      <button aria-pressed="false"><span class="lamp green"></span>0000–0600</button>
+      <button aria-pressed="true"><span class="lamp amber"></span>0600–1200</button>
+      <button aria-pressed="false"><span class="lamp grey"></span>1200–1800</button>
+      <button aria-pressed="false"><span class="lamp grey"></span>1800–2400</button>
+    </div>
+  </div>
+  <div style="margin-left:auto;text-align:right">
+    <div class="lbl">Status</div>
+    <div style="display:flex;gap:8px;align-items:center;font-size:15px"><span class="lamp amber"></span><b>DRAFT</b> · <span class="muted" data-saved>draft saved 11:47</span></div>
+  </div>
+</div>
+
+<main class="page">
+  <div class="entry-layout">
+    <aside class="rail plate" style="padding:10px 6px">
+      <div class="plate-head" style="margin:4px 10px 6px"><h2>Sections</h2></div>
+      <ol></ol>
+      <div style="padding:8px 10px;font-size:12px" class="muted">
+        <button class="btn ghost" data-open-jump style="min-height:36px;padding:0 8px;font-size:12px">Jump… <kbd>Ctrl</kbd>+<kbd>J</kbd></button>
+      </div>
+    </aside>
+    <div class="sections"></div>
+  </div>
+</main>
+
+<footer class="statusbar">
+  <div class="stat"><span class="lamp green"></span>Entered <b data-stat-done></b></div>
+  <div class="stat"><span class="lamp grey"></span>Missing <b data-stat-missing></b></div>
+  <div class="stat"><span class="lamp red"></span>For review <b data-stat-review></b></div>
+  <span class="spacer"></span>
+  <span class="keys"><kbd>Enter</kbd> next · <kbd>Shift</kbd>+<kbd>Enter</kbd> back · <kbd>Esc</kbd> clear · <kbd>Ctrl</kbd>+<kbd>S</kbd> save</span>
+  <a class="btn primary" href="review.html" style="display:inline-flex;align-items:center;text-decoration:none">Review &amp; close ›</a>
+</footer>
+
+<dialog id="jump" aria-label="Jump to section">
+  <div class="plate-head" style="margin:0"><h2>Jump to section</h2></div>
+  <ol></ol>
+</dialog>
+</body>
+</html>

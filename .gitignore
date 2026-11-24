@@ -1,0 +1,37 @@
+# --- Real vessel data: NEVER commit (public repository) ---
+*.xlsx
+*.xlsm
+*.xls
+~$*
+*.csv.real
+
+# --- Runtime data ---
+*.sqlite
+*.sqlite3
+*.sqlite*-shm
+*.sqlite*-wal
+*.db
+instance/
+data/
+pdfs/
+backups/
+*.pdf
+!docs/samples/*.synthetic.pdf
+
+# --- Secrets / env ---
+.env
+.env.*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# --- OS / editor ---
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
