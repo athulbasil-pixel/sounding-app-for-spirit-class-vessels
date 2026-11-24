@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Reports {{ ref }}{% endblock %}
+{% block page %}reports{% endblock %}
+{% block body %}
+<form class="context" method="get">
+  <div>
+    <div class="lbl">Report for ship date</div>
+    <div class="datebox">
+      <input type="date" name="date" value="{{ ref.isoformat() }}" aria-label="Ship date" onchange="this.form.submit()">
+      <button class="btn" type="submit">Show</button>
+    </div>
+  </div>
+  <div class="muted" style="font-size:13px;max-width:520px">
+    Totals add up the valid watch-by-watch differences. If any interval is missing, the total is marked
+    <b style="color:var(--lamp-amber)">incomplete</b>; open it to see which watches. Operating and loading hours are kept separate.
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+    <a class="btn" href="{{ url_for('watchlog.reports_csv', date=ref.isoformat()) }}">Export totals (CSV)</a>
+    {% if rep.periods.month.start %}
+    <a class="btn" href="{{ url_for('watchlog.intervals_csv', **{'from': rep.periods.month.start, 'to': rep.periods.month.end}) }}">Export month intervals (CSV)</a>
+    {% endif %}
+  </div>
+</form>
+
+<main class="page" style="max-width:1400px">
+  <div class="period-strip">
+    {% for k in periods %}{% set p = rep.periods[k] %}
+    <section class="plate period">
+      <div class="plate-head" style="margin:0 6px 6px"><h2>{{ p.label }}</h2></div>
+      <div class="pnote">{{ p.note }}</div>
+      <div class="pcov mono">{{ p.covered }}</div>
+      <div class="muted" style="font-size:12px">{{ p.intervals }} watch interval{{ '' if p.intervals == 1 else 's' }} recorded in range</div>
+    </section>
+    {% endfor %}
+  </div>
+
+  {% for g in rep.groups %}
+  <section class="plate" style="margin-top:18px">
+    <div class="plate-head"><h2>{{ g.title }}</h2></div>
+    <table class="log report">
+      <tr><th>Equipment</th><th>Unit</th>{% for k in periods %}<th style="text-align:right">{{ rep.periods[k].label }}</th>{% endfor %}</tr>
+      {% for row in g.rows %}
+      <tr class="{{ 'composite' if row.composite }}">
+        <td>{% if row.section %}<span class="muted mono" style="font-size:11px">{{ row.section }}</span> {% endif %}{{ row.label }}</td>
+        <td class="muted">{{ row.unit }}</td>
+        {% for k in periods %}{% set c = row.cells[k] %}
+        <td class="rcell">
+          {% if c.expected == 0 %}
+            <span class="muted">—</span>
+          {% else %}
+            {% if not row.composite %}<a class="rwrap" href="{{ url_for('watchlog.report_detail', field=row.id, period=k, date=ref.isoformat()) }}" title="{{ c.valid }} of {{ c.expected }} intervals valid">{% else %}<span class="rwrap" title="Sum of {{ row.parts|length }} machines">{% endif %}
+            <span class="mono rval {{ '' if c.complete else 'inc' }}">{{ c.value | num if c.value is not none else '—' }}</span>
+            <span class="lamp {{ 'green' if c.complete else 'amber' }}"></span>
+            {% if not c.complete %}<small class="gapnote">{{ c.gaps|length }} gap{{ '' if c.gaps|length == 1 else 's' }} · {{ c.valid }}/{{ c.expected }}</small>{% endif %}
+            {% if not row.composite %}</a>{% else %}</span>{% endif %}
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+  {% endfor %}
+  <p class="muted" style="font-size:12px;margin:14px 4px">
+    Deferred until confirmed onboard: generator running hours, sludge generation and tank-volume conversions. Raw soundings are stored for later use.
+  </p>
+</main>
+{% endblock %}

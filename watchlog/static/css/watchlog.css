@@ -385,3 +385,17 @@ table.log tr:hover td { cursor: default; }
   .statusbar .spacer { display: none; }
   .statusbar .btn.primary { margin-left: auto; }
 }
+
+/* ================= Reports (Phase 3) ================= */
+.period-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.period .pnote { font-size: 14px; margin: 0 6px 4px; }
+.period .pcov { font-size: 12px; color: var(--cyan); margin: 0 6px 4px; }
+.period .muted { margin: 0 6px; }
+table.report td.rcell { text-align: right; white-space: nowrap; }
+table.report td.rcell .rwrap { text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+table.report td.rcell a:hover .rval { text-decoration: underline; }
+table.report .rval { font-size: 15px; }
+table.report .rval.inc { color: var(--lamp-amber); }
+table.report .gapnote { flex-basis: 100%; text-align: right; font-size: 11px; color: var(--lamp-amber); }
+table.report tr.composite td { border-top: 1px dashed var(--plate-edge); font-weight: 600; }
+@media (max-width: 1000px) { .period-strip { grid-template-columns: repeat(2, 1fr); } }

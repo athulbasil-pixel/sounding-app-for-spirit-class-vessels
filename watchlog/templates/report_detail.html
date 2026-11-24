@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ f.label }} · {{ period_label }}{% endblock %}
+{% block page %}reports{% endblock %}
+{% block body %}
+<div class="context">
+  <a class="btn" href="{{ url_for('watchlog.reports_page', date=ref.isoformat()) }}">‹ Reports</a>
+  <div style="font-size:16px"><b>{{ f.label }}</b> · {{ period_label }} · <span class="muted">{{ period.note }}</span></div>
+  <div style="margin-left:auto;text-align:right">
+    <div class="lbl">Total ({{ f.diff_unit }})</div>
+    <div class="mono" style="font-size:22px;{{ '' if total.complete else 'color:var(--lamp-amber)' }}">
+      {{ total.value | num if total.value is not none else '—' }}</div>
+    <div class="muted" style="font-size:12px">{{ total.valid }} of {{ total.expected }} intervals valid{{ '' if total.complete else ' · INCOMPLETE' }}</div>
+  </div>
+</div>
+<main class="page" style="max-width:1100px">
+  <section class="plate">
+    <div class="plate-head"><h2>Watch intervals</h2><span class="right mono">{{ period.covered }}</span></div>
+    <table class="log">
+      <tr><th>Ship date</th><th>Watch</th><th style="text-align:right">Previous</th><th style="text-align:right">Reading</th><th style="text-align:right">Difference</th><th>Status</th></tr>
+      {% for r in rows %}
+      <tr>
+        <td class="mono"><a href="{{ url_for('watchlog.day', ship_date=r.ship_date) }}">{{ r.ship_date }}</a></td>
+        <td class="mono">{{ WATCH_LABELS[r.watch] | replace('-', '–') }}</td>
+        <td class="mono" style="text-align:right">{{ r.prev | num if r.prev is not none else '—' }}</td>
+        <td class="mono" style="text-align:right">{% if r.state == 'entered' %}{{ r.raw or (r.value | num) }}{% elif r.state == 'unavailable' %}<span style="color:var(--lamp-amber)">UNAVAILABLE</span>{% elif r.state == 'no_log' %}<span class="muted">not logged</span>{% else %}<span style="color:var(--lamp-red)">MISSING</span>{% endif %}</td>
+        <td class="mono" style="text-align:right">{% if r.diff_status == 'ok' %}+{{ r.diff | num }}{% endif %}</td>
+        <td><span class="lamp {{ 'green' if r.diff_status == 'ok' else 'red' if r.diff_status == 'review' else 'amber' }}"></span>
+          <span class="muted">{% if r.diff_status == 'ok' %}{{ r.diff_note or '' }}{% elif r.diff_status == 'review' %}meter went backwards — confirm in the watch{% elif r.state == 'unavailable' %}unavailable: {{ r.reason }}{% elif r.diff_status == 'no_previous' %}no previous reading{% elif r.state == 'entered' %}previous reading missing{% else %}reading missing{% endif %}</span></td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="muted">No recorded watches in this period.</td></tr>{% endfor %}
+    </table>
+  </section>
+</main>
+{% endblock %}

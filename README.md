@@ -2,7 +2,7 @@
 
 This app replaces the Excel engine-room watch and sounding workbook with an offline browser app built on Flask and SQLite.
 
-**Status: Phase 2: watch entry, close, history, corrections, PDF and tablet (LAN) mode.** Reports (day, week and month totals) arrive in Phase 3.
+**Status: Phase 3: watch entry, close, history, corrections, PDF, tablet (LAN) mode and reports.** Phase 4 (backups, offline installer, hardening) is next.
 
 ## Start (Windows)
 
@@ -45,6 +45,17 @@ To run the tests, double-click `TEST_WATCHLOG_WINDOWS.bat`, or run `.venv\Script
 - **PDF on closing:** A4, named `YYYY-MM-DD_HHMM-HHMM_Watch_Log.pdf` (`_v2` for a correction), with table headings repeated across pages. Missing readings are shown in red and corrections get a banner.
   - From the record page you can open, download or print it. PDFs are stored under `%LOCALAPPDATA%\MarineSense\WatchLog\pdfs\`.
 
+## What Phase 3 adds: Reports
+
+- **Reports** in the top menu: pick a ship date to see totals for the **last completed watch**, that **day**, its **ISO week** (Monday–Sunday) and its **month**. Each column shows the dates it covers.
+- **Compressor running hours** per machine. Operating and loading hours are kept separate.
+  - Service-air totals are shown both ways: the workbook's Aft + Fwd, and all machines including the osmosis room.
+  - Also included: control air compressor 3 and starting air No. 1–3, with a combined total.
+- **Fuel consumption** (feeder modules and boilers), **fresh-water production** (Aft LOC, Fwd LOC, RO and total) and **cleaning cycles** (purifiers, filters, feeders and DG 1–6).
+- **Gaps are never filled with zero.** A total with a missing, unavailable or unconfirmed interval is marked **incomplete**, with the gap count. Click a total to see each watch interval and the reason for each gap.
+  - Watches before the first record or after the latest one count as not yet recorded, not as gaps.
+- **CSV export:** totals for all periods, and every watch interval of the month (opens in Excel).
+
 ## Tablet access (LAN, opt-in)
 
 1. On the ECR PC, open **Settings → Tablet access** and set a 4–12 digit PIN. The PIN can only be changed on the ECR PC itself.
@@ -57,7 +68,7 @@ The connection is plain HTTP, so use it only on the ship's internal network. In 
 
 | Path | Contents |
 |---|---|
-| `watchlog/` | The Flask app: `logic.py` (rules and calculations), `records.py` (close, corrections, history, PDF and LAN), `pdf.py`, `registry.py`, `db.py`, `views.py`, templates and static files |
+| `watchlog/` | The Flask app: `logic.py` (rules and calculations), `records.py` (close, corrections, history, PDF and LAN), `reports.py` and `report_views.py` (period totals and CSV), `pdf.py`, `registry.py`, `db.py`, `views.py`, templates and static files |
 | `docs/field_registry.yaml` | Every workbook field. The entry screen and calculations are built from this file |
 | `docs/data_model.md` | Schema and calculation rules |
 | `docs/WATCHLOG_BUILD_PROMPT.md` | Build brief, phase plan and approved design decisions |

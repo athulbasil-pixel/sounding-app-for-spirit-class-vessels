@@ -7,12 +7,14 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import functools
+from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
 from .db import DEFAULT_ROLLOVER
-from .registry import FW_SLOT_STORAGE, FW_SLOTS, WATCHES, Field, Registry
+from .registry import FW_SLOT_STORAGE, FW_SLOTS, WATCH_LABELS, WATCHES, Field, Registry
 
 # ---------------------------------------------------------------- parsing
 
@@ -211,8 +213,7 @@ def reading_at(conn, field_id: str, series: str, ship_date: str, point: str, _ea
         return PointValue("no_log", ship_date=ship_date, point=point)
     if not_in_use(conn, field_id, ship_date):
         return PointValue("not_in_use", ship_date=ship_date, point=point)
-    r = conn.execute("SELECT * FROM reading WHERE log_id=? AND field_id=? AND slot=?",
-                     (log["id"], field_id, slot)).fetchone()
+    r = _reading_row(conn, log["id"], field_id, slot)
     if r is None or r["status"] == "missing":
         return PointValue("missing", ship_date=ship_date, point=point)
     return PointValue(r["status"], value=r["value_num"], raw=r["raw_text"], qualifier=r["qualifier"],
@@ -593,3 +594,54 @@ def history(conn, reg: Registry, date_from: str, date_to: str, watch: str | None
         if len(out) >= limit:
             break
     return out
+
+
+# ---------------------------------------------------------------- read cache (reports)
+#
+# Period reports evaluate thousands of intervals. Inside `read_cache()` the
+# lookup helpers below are memoised for the duration of one read-only request,
+# so the same rules (compute_point) are reused without thousands of queries.
+
+_MEMO: ContextVar[dict | None] = ContextVar("_MEMO", default=None)
+
+
+def _memo(fn):
+    @functools.wraps(fn)
+    def wrapper(conn, *args):
+        m = _MEMO.get()
+        if m is None:
+            return fn(conn, *args)
+        key = (fn.__name__,) + args
+        if key not in m:
+            m[key] = fn(conn, *args)
+        return m[key]
+    return wrapper
+
+
+def _reading_row(conn, log_id, field_id, slot):
+    m = _MEMO.get()
+    if m is None:
+        return conn.execute("SELECT * FROM reading WHERE log_id=? AND field_id=? AND slot=?",
+                            (log_id, field_id, slot)).fetchone()
+    key = ("rows", log_id)
+    if key not in m:
+        m[key] = {(r["field_id"], r["slot"]): r for r in
+                  conn.execute("SELECT * FROM reading WHERE log_id=?", (log_id,))}
+    return m[key].get((field_id, slot))
+
+
+@contextmanager
+def read_cache():
+    token = _MEMO.set({})
+    try:
+        yield
+    finally:
+        _MEMO.reset(token)
+
+
+current_log = _memo(current_log)
+earliest_log = _memo(earliest_log)
+not_in_use = _memo(not_in_use)
+rollover_limit = _memo(rollover_limit)
+opening_balance = _memo(opening_balance)
+point_event = _memo(point_event)

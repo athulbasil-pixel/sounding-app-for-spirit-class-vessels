@@ -9,7 +9,7 @@ from flask import Flask
 
 from . import db
 
-__version__ = "0.2.0-phase2"
+__version__ = "0.3.0-phase3"
 
 
 def default_data_dir() -> Path:
@@ -44,5 +44,6 @@ def create_app(data_dir: str | Path | None = None, testing: bool = False, lan: b
 
     from .views import bp
     from . import records  # noqa: F401  (registers Phase 2 routes on bp)
+    from . import report_views  # noqa: F401  (Phase 3 routes)
     app.register_blueprint(bp)
     return app
