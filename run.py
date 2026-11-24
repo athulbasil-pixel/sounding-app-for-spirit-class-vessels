@@ -36,6 +36,7 @@ def main() -> None:
     ap.add_argument("--demo", action="store_true",
                     help="training mode: separate folder with SYNTHETIC data; the real log is not touched")
     args = ap.parse_args()
+    args.data_dir_given = args.data_dir is not None
     if args.port is None:
         args.port = 5081 if args.demo else 5080
     if args.demo:
@@ -60,7 +61,8 @@ def main() -> None:
         print(f"\n  Port {args.port} is used by another program. Close it, or start with --port 5085.\n")
         sys.exit(1)
 
-    app = create_app(args.data_dir, lan=args.lan)
+    shared_fb = (default_data_dir() / "feedback.sqlite3") if args.demo and not args.data_dir_given else None
+    app = create_app(args.data_dir, lan=args.lan, feedback_db=shared_fb)
     print(f"\n  MarineSense Watch Log {__version__} running at {url}")
     print(f"  Data folder: {args.data_dir or default_data_dir()}")
     print("  Keep this window open while using the log. Close it (or press Ctrl+C) to stop.\n")
@@ -81,5 +83,28 @@ def main() -> None:
         app.run(host=host, port=args.port, debug=False, threaded=True, use_reloader=False)
 
 
+def _set_title() -> None:
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            mode = " - TRAINING" if "--demo" in sys.argv else " - TABLET ACCESS ON" if "--lan" in sys.argv else ""
+            ctypes.windll.kernel32.SetConsoleTitleW(f"MarineSense Watch Log{mode} (keep this window open)")
+        except Exception:
+            pass
+
+
 if __name__ == "__main__":
-    main()
+    _set_title()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
+    except SystemExit:
+        raise
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        print("\n  The Watch Log could not start. Send a photo of this window to the developer.")
+        if getattr(sys, "frozen", False):
+            input("  Press Enter to close.")
+        sys.exit(1)

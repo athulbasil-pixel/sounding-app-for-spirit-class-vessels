@@ -409,3 +409,14 @@ table.report tr.composite td { border-top: 1px dashed var(--plate-edge); font-we
   background: repeating-linear-gradient(135deg, #f6c400 0 18px, #ffd84d 18px 36px); }
 .demo-banner + .brandbar { top: 31px; }
 @media (forced-colors: active) { .lamp { forced-color-adjust: none; border: 1px solid CanvasText; } }
+
+/* ================= Reviewer feedback ================= */
+.fb-fab { position: fixed; left: 14px; bottom: 74px; z-index: 18; font: inherit; font-weight: 700; font-size: 13px;
+  padding: 10px 14px; border-radius: 22px; cursor: pointer; color: #1b1600; border: 1px solid #8f7000;
+  background: linear-gradient(#ffd53a, #e0b000); box-shadow: 0 4px 12px rgba(0,0,0,.45); }
+body:not([data-page="entry"]) .fb-fab { bottom: 18px; }
+.fb-note { display: flex; flex-direction: column; gap: 8px; padding: 12px 8px; border-bottom: 1px solid color-mix(in srgb, var(--plate-edge) 60%, transparent); }
+.fb-meta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.fb-meta select { font: inherit; color: var(--text); background: var(--recess); border: 1px solid var(--odo-edge); border-radius: 6px; padding: 6px 8px; }
+#fb-dialog { width: min(520px, 92vw); }
+main.page { padding-bottom: 80px; }   /* room for the Feedback button */

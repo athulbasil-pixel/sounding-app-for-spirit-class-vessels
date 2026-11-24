@@ -155,7 +155,8 @@ def test_real_app_has_no_training_banner(client):
 
 def test_health_and_error_pages(client):
     h = client.get("/health").get_json()
-    assert h["ok"] is True and h["version"] == "1.0.0"
+    from watchlog import __version__
+    assert h["ok"] is True and h["version"] == __version__
     r = client.get("/no-such-page")
     assert r.status_code == 404 and "Go to the Watch board" in r.get_data(as_text=True)
 

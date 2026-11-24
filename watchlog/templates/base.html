@@ -23,6 +23,7 @@
     <a href="{{ url_for('watchlog.history_page') }}" {% if pg == 'history' %}aria-current="page"{% endif %}>History</a>
     <a href="{{ url_for('watchlog.reports_page') }}" {% if pg == 'reports' %}aria-current="page"{% endif %}>Reports</a>
     <a href="{{ url_for('watchlog.settings') }}" {% if pg == 'settings' %}aria-current="page"{% endif %}>Settings</a>
+    <a href="{{ url_for('watchlog.feedback_page') }}" {% if pg == 'feedback' %}aria-current="page"{% endif %}>Feedback</a>
   </nav>
   <span class="spacer"></span>
   <span class="vessel">{{ vessel_name }}</span>
@@ -35,5 +36,26 @@
 <div class="flashes">{% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}</div>
 {% endif %}{% endwith %}
 {% block body %}{% endblock %}
+{% if pg not in ('feedback', 'unlock') %}
+<button type="button" class="fb-fab" data-fb-open title="Write a review note about this screen">✎ Feedback</button>
+<dialog id="fb-dialog" aria-label="Feedback about this screen">
+  <form method="dialog">
+    <div class="plate-head" style="margin:0 0 8px"><h2>Note about this screen</h2></div>
+    <p class="muted" style="margin:0 0 10px;font-size:13px" data-fb-where></p>
+    <label class="field">Type
+      <select name="category">
+        <option value="suggestion">Suggestion</option><option value="problem">Problem / bug</option>
+        <option value="missing">Missing field or equipment</option><option value="wording">Wording / units</option>
+        <option value="question">Question</option><option value="good">Works well</option>
+      </select></label>
+    <label class="field" style="margin-top:10px">Note
+      <textarea name="text" rows="5" maxlength="4000" class="remarks"></textarea></label>
+    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:12px">
+      <a href="{{ url_for('watchlog.feedback_page') }}" style="font-size:13px">All notes &amp; export ›</a>
+      <span style="display:flex;gap:8px"><button class="btn ghost" value="cancel">Cancel</button><button class="btn primary" value="ok">Save note</button></span>
+    </div>
+  </form>
+</dialog>
+{% endif %}
 </body>
 </html>

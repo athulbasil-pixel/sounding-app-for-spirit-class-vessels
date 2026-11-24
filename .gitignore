@@ -38,3 +38,9 @@ Thumbs.db
 
 # --- Offline install bundle (binary wheels) ---
 wheels/
+
+# --- Installer build output ---
+build/
+dist/
+installer/Output/
+*.spec.bak

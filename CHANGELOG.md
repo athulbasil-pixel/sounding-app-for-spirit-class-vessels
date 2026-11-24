@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1: Windows installer and reviewer feedback
+- `MarineSense_WatchLog_Setup_1.0.1.exe`: a per-user installer (no admin rights) that bundles Python 3.12 (PyInstaller) and is built with Inno Setup.
+  - Start-menu shortcuts for normal, training and tablet mode, plus the reviewer guide; it includes an uninstaller.
+- Feedback button on every screen, a Feedback page (edit and delete notes, reviewer name) and a one-file text export. Notes from training and normal mode go to one shared file.
+- The launcher sets the window title and keeps the window open if start-up fails.
+
 ## 1.0.0 — Phase 4: backups, training mode, offline install, hardening
 - Automatic backups (daily, and after each closed watch) plus manual backups, a full .zip backup (database and PDFs) and copy to a USB folder.
 - Restore from a saved backup or an uploaded file, after typing RESTORE to confirm. The current database is backed up first and every file is integrity-checked.

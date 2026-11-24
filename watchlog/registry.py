@@ -13,9 +13,13 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 
+import sys
+
 import yaml
 
-REGISTRY_PATH = Path(__file__).resolve().parent.parent / "docs" / "field_registry.yaml"
+# In the installed (PyInstaller) build, data files live under sys._MEIPASS.
+_ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
+REGISTRY_PATH = _ROOT / "docs" / "field_registry.yaml"
 
 WATCHES = ["w1", "w2", "w3", "w4"]
 WATCH_LABELS = {"w1": "0000-0600", "w2": "0600-1200", "w3": "1200-1800", "w4": "1800-2400"}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Feedback{% endblock %}
+{% block page %}feedback{% endblock %}
+{% block body %}
+<main id="main" class="page" style="max-width:1100px">
+  <h1 class="pagetitle">Review feedback</h1>
+  <p class="muted" style="margin-top:-8px">
+    Write down anything you notice while using the log: missing equipment, wrong units, confusing steps, things that work well.
+    The <b>Feedback</b> button at the bottom-left of every screen records which screen you were on.
+    When you are done, press <b>Export notes</b> and send the file.
+  </p>
+
+  <div class="grid2" style="margin:0 0 18px">
+    <section class="plate">
+      <div class="plate-head"><h2>Send to the developer</h2></div>
+      <div style="padding:0 8px;display:flex;flex-direction:column;gap:12px">
+        <a class="btn primary" href="{{ url_for('watchlog.feedback_export') }}">Export notes ({{ notes|length }}) as a text file</a>
+        <p class="muted" style="font-size:13px;margin:0">The file is saved to your Downloads folder. Attach it to an email or WhatsApp message.
+          It contains only your notes, your name, the app version and the Windows version — no watch readings.</p>
+        <form method="post" class="inline-form" style="padding:0">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="action" value="reviewer">
+          <label class="field">Your name / rank (shown on the export)
+            <input name="reviewer" value="{{ reviewer }}" maxlength="80"></label>
+          <button class="btn" type="submit">Save</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="plate">
+      <div class="plate-head"><h2>Add a general note</h2></div>
+      <form method="post" style="display:flex;flex-direction:column;gap:10px;padding:0 8px">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="action" value="add">
+        <label class="field">Type
+          <select name="category">{% for k, v in categories.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+        <label class="field">Note
+          <textarea name="text" rows="4" maxlength="4000" required class="remarks"></textarea></label>
+        <button class="btn" type="submit">Add note</button>
+      </form>
+    </section>
+  </div>
+
+  <section class="plate">
+    <div class="plate-head"><h2>Notes · {{ notes|length }}</h2></div>
+    {% for n in notes %}
+    <form method="post" class="fb-note">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ n.id }}">
+      <div class="fb-meta">
+        <select name="category" aria-label="Type">{% for k, v in categories.items() %}<option value="{{ k }}" {% if n.category == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+        <span class="muted">{{ n.page_title or '' }} · {{ n.created_at[:16] | replace('T', ' ') }}</span>
+      </div>
+      <textarea name="text" rows="3" maxlength="4000" class="remarks" aria-label="Note">{{ n.text }}</textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn ghost" name="action" value="delete" type="submit" onclick="return confirm('Delete this note?')">Delete</button>
+        <button class="btn" name="action" value="edit" type="submit">Save changes</button>
+      </div>
+    </form>
+    {% else %}
+    <p class="muted" style="margin:0 8px">No notes yet. Use the Feedback button at the bottom-left of any screen.</p>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}

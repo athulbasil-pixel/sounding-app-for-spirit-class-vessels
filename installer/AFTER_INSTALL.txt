@@ -1,0 +1,20 @@
+MarineSense Watch Log is installed.
+
+START
+  Start menu > MarineSense Watch Log
+  A black window opens - keep it open while you use the log.
+  Your browser opens at http://127.0.0.1:5080/
+
+PRACTISE FIRST
+  Start menu > Watch Log - Training (sample data)
+  Separate copy with invented readings. Nothing touches the real log.
+
+GIVE FEEDBACK
+  Press the yellow "Feedback" button on any screen and write your notes.
+  When finished: Feedback > Export notes, and send the text file
+  (it is saved in your Downloads folder).
+
+Your data stays on this PC in %LOCALAPPDATA%\MarineSense\WatchLog.
+Uninstalling the app keeps that data folder.
+
+The full Reviewer guide is in the Start menu.

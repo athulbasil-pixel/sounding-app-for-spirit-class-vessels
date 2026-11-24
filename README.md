@@ -4,6 +4,17 @@ This app replaces the Excel engine-room watch and sounding workbook with an offl
 
 **Version 1.0.0**: watch entry, close, history, corrections, PDF, reports, backups, training mode and tablet (LAN) mode. See [CHANGELOG.md](CHANGELOG.md).
 
+## Install on another PC (no Python needed)
+
+Send **`MarineSense_WatchLog_Setup_<version>.exe`**. It installs for the current Windows user, with no administrator rights, on Windows 10/11 64-bit.
+- The Start menu gets shortcuts for normal use, **Training (sample data)**, **Tablet access (LAN)** and the **Reviewer guide**.
+- The installer isn't code-signed yet, so Windows may show "Windows protected your PC". Click **More info → Run anyway**.
+- Uninstalling removes the program but keeps the data folder.
+
+To build it (needs Python 3.12 and Inno Setup 6), run `BUILD_INSTALLER_WINDOWS.bat`. The installer is written to `installer\Output\`, which is git-ignored.
+
+**Reviewer feedback:** the yellow **✎ Feedback** button on every screen saves a note tagged with that screen. **Feedback → Export notes** saves one text file containing only notes, name and version, never readings. Notes from normal and training mode share one file.
+
 ## Start (Windows)
 
 1. Install **Python 3.11 or newer** from python.org and tick *Add Python to PATH*.
