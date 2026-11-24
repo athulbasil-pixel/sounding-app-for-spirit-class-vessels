@@ -21,7 +21,7 @@
                  ["history.html", "History", "history"], ["#", "Reports", "reports"], ["#", "Settings", "settings"]];
     const t = document.documentElement.dataset.theme;
     return `
-      <img class="logo" src="../static/brand/marinesense-logo.png" alt="MarineSense">
+      <img class="logo" src="../watchlog/static/brand/marinesense-logo.png" alt="MarineSense">
       <div class="app-title"><b>Engine Room Watch Log</b><span>Spirit class · Phase 0 mockup</span></div>
       <nav>${nav.map(([h, l, k]) => `<a href="${h}" ${k === page ? 'aria-current="page"' : ""} ${h === "#" ? 'title="Phase 3/4" style="opacity:.5"' : ""}>${l}</a>`).join("")}</nav>
       <span class="spacer"></span>

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ ship_date }} {{ WATCH_LABELS[watch] }}{% endblock %}
+{% block page %}entry{% endblock %}
+{% block head %}
+<script id="layout" type="application/json">{{ layout | tojson }}</script>
+<script src="{{ url_for('static', filename='js/entry.js') }}?v={{ app_version }}" defer></script>
+{% endblock %}
+{% block body %}
+<div class="context" data-date="{{ ship_date }}" data-watch="{{ watch }}">
+  <div>
+    <div class="lbl">Ship date</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <a class="btn" href="{{ url_for('watchlog.day', ship_date=ship_date) }}" title="Back to watch board">‹ Board</a>
+      <span class="mono" style="font-size:18px">{{ day.strftime('%a %d %b %Y') }}</span>
+    </div>
+  </div>
+  <div>
+    <div class="lbl">Watch</div>
+    <div class="watch-seg" role="group" aria-label="Watch">
+      {% for w in watches %}
+        {% set lamp = {'not_started':'grey','draft':'amber','closed':'green'}[w.status] %}
+        {% if w.status == 'not_started' %}
+          <form method="post" action="{{ url_for('watchlog.start_watch', ship_date=ship_date, watch=w.watch) }}" style="display:contents">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+            <button type="submit" aria-pressed="false" title="Start this watch"><span class="lamp {{ lamp }}"></span>{{ WATCH_LABELS[w.watch] | replace('-', '–') }}</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('watchlog.entry', ship_date=ship_date, watch=w.watch) }}" role="button"
+             aria-pressed="{{ 'true' if w.watch == watch else 'false' }}"><span class="lamp {{ lamp }}"></span>{{ WATCH_LABELS[w.watch] | replace('-', '–') }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  <div style="margin-left:auto;text-align:right">
+    <div class="lbl">Status</div>
+    <div style="display:flex;gap:8px;align-items:center;font-size:15px"><span class="lamp amber" data-status-lamp></span><b data-status>DRAFT</b> · <span class="muted" data-saved>loading…</span></div>
+  </div>
+</div>
+
+<main class="page">
+  <div class="entry-layout">
+    <aside class="rail plate" style="padding:10px 6px">
+      <div class="plate-head" style="margin:4px 10px 6px"><h2>Sections</h2></div>
+      <ol></ol>
+      <div style="padding:8px 10px;font-size:12px" class="muted">
+        <button class="btn ghost" type="button" data-open-jump style="min-height:36px;padding:0 8px;font-size:12px">Jump… <kbd>Ctrl</kbd>+<kbd>J</kbd></button>
+      </div>
+    </aside>
+    <div class="sections"></div>
+  </div>
+</main>
+
+<footer class="statusbar">
+  <div class="stat"><span class="lamp green"></span>Entered <b data-stat-done>–</b></div>
+  <div class="stat"><span class="lamp grey"></span>Missing <b data-stat-missing>–</b></div>
+  <div class="stat"><span class="lamp amber"></span>Unavailable <b data-stat-unavail>–</b></div>
+  <div class="stat"><span class="lamp red"></span>For review <b data-stat-review>–</b></div>
+  <span class="spacer"></span>
+  <span class="keys"><kbd>Enter</kbd> next · <kbd>Shift</kbd>+<kbd>Enter</kbd> back · <kbd>Esc</kbd> undo edit · <kbd>Ctrl</kbd>+<kbd>S</kbd> save</span>
+  <button class="btn primary" type="button" disabled title="Review &amp; close arrives in Phase 2">Review &amp; close ›</button>
+</footer>
+
+<dialog id="jump" aria-label="Jump to section">
+  <div class="plate-head" style="margin:0"><h2>Jump to section</h2></div>
+  <ol></ol>
+</dialog>
+
+<dialog id="unavail" aria-label="Mark reading unavailable">
+  <form method="dialog">
+    <div class="plate-head" style="margin:0 0 10px"><h2>Reading unavailable</h2></div>
+    <p data-unavail-label style="margin:0 0 10px"></p>
+    <div class="chips">
+      <button type="button" class="btn" data-reason="Equipment stopped">Equipment stopped</button>
+      <button type="button" class="btn" data-reason="Meter / gauge fault">Meter / gauge fault</button>
+      <button type="button" class="btn" data-reason="Not accessible">Not accessible</button>
+      <button type="button" class="btn" data-reason="Under maintenance">Under maintenance</button>
+    </div>
+    <label class="field" style="margin-top:12px">Reason (required)
+      <input name="reason" maxlength="200" autocomplete="off"></label>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn ghost" value="cancel">Cancel</button>
+      <button class="btn primary" value="ok">Mark unavailable</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="meter" aria-label="Meter replaced">
+  <form method="dialog">
+    <div class="plate-head" style="margin:0 0 10px"><h2>Meter replaced</h2></div>
+    <p data-meter-label style="margin:0 0 10px"></p>
+    <label class="field">Opening reading of the new meter
+      <input name="value" class="mono" inputmode="decimal" autocomplete="off"></label>
+    <label class="field" style="margin-top:10px">Reason / note
+      <input name="reason" maxlength="200" autocomplete="off"></label>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn ghost" value="cancel">Cancel</button>
+      <button class="btn primary" value="ok">Confirm</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

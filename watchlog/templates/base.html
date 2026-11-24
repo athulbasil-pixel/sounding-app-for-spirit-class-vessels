@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-theme="night">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Watch Log{% endblock %} · MarineSense</title>
+<link rel="icon" href="{{ url_for('static', filename='brand/marinesense-logo.png') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/watchlog.css') }}?v={{ app_version }}">
+<script>document.documentElement.dataset.theme = localStorage.getItem("ms-theme") || "night";</script>
+<script src="{{ url_for('static', filename='js/app.js') }}?v={{ app_version }}" defer></script>
+{% block head %}{% endblock %}
+</head>
+<body data-page="{% block page %}{% endblock %}">
+<header class="brandbar">
+  <a href="{{ url_for('watchlog.home') }}"><img class="logo" src="{{ url_for('static', filename='brand/marinesense-logo.png') }}" alt="MarineSense"></a>
+  <div class="app-title"><b>Engine Room Watch Log</b><span>Spirit class · v{{ app_version }}</span></div>
+  {% set pg = self.page() %}
+  <nav>
+    <a href="{{ url_for('watchlog.home') }}" {% if pg == 'board' %}aria-current="page"{% endif %}>Watch board</a>
+    {% if pg == 'entry' %}<a href="#" aria-current="page">Watch entry</a>{% endif %}
+    <a class="soon" title="Coming in Phase 2">History</a>
+    <a class="soon" title="Coming in Phase 3">Reports</a>
+    <a href="{{ url_for('watchlog.settings') }}" {% if pg == 'settings' %}aria-current="page"{% endif %}>Settings</a>
+  </nav>
+  <span class="spacer"></span>
+  <span class="vessel">{{ vessel_name }}</span>
+  <div class="rocker" role="group" aria-label="Theme">
+    <button type="button" data-theme-btn="night">NIGHT</button>
+    <button type="button" data-theme-btn="day">DAY</button>
+  </div>
+</header>
+{% with msgs = get_flashed_messages() %}{% if msgs %}
+<div class="flashes">{% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}</div>
+{% endif %}{% endwith %}
+{% block body %}{% endblock %}
+</body>
+</html>

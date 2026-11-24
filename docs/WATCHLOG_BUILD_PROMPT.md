@@ -21,6 +21,14 @@ The repository is **public**. The workbook, real readings, crew names, generated
 - **Devices:** both the ECR desktop PC (keyboard-first, wide layout) and a tablet on rounds (touch, one section per screen). The layout must be responsive.
   Because a tablet cannot reach `127.0.0.1` on the ECR PC, v1 stays localhost. An opt-in **LAN mode** (bind to the ECR PC's IP, with a simple PIN) is moved up to Phase 2.
 
+### Phase 0 review decisions (approved)
+- **Mockup look:** approved as is. Phase 1 reuses `mockups/mockup.css` styling: panel plates, odometer inputs, indicator lamps, and the yellow highlight on the current watch.
+- **Unused fields** (e.g. evaporator ECR counters, DG sump DAM): can be marked "not in use" once in Settings. They are then hidden from entry and never counted as missing until re-enabled. Store this setting with an effective date so history stays correct.
+- **Counter rollover:** the limit is set per meter in Settings, defaulting to 1 000 000. A drop below the previous reading is still flagged, and the officer confirms either *rollover* (using that meter's limit) or *meter replaced*.
+- **Signatures:** one responsible officer and closure time per watch, recorded on closing. There are no per-section initials.
+- **Service-air daily total:** show both the workbook total (Aft + Fwd, operating and loading separately) and an all-machines total that includes the osmosis-room compressor, clearly labelled.
+- **Closing with blanks:** allowed after the officer ticks a confirmation. Blanks are recorded as MISSING in the record and the PDF, and affected differences and totals show as incomplete.
+
 ## 2. What the workbook contains (verified; re-check before coding)
 
 Sheets `Day 1` … `Day 31` plus `Model`. Day 31 exists even though April has 30 days, so the app must not infer calendar dates from sheet names. The date cell `B2` on Day 1 holds 20 Nov 2022, a stale template date. **The ship date must be entered explicitly. Do not derive it from sheet names, sheet dates or the Windows clock.**

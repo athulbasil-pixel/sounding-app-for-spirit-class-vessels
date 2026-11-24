@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Watch board {{ ship_date }}{% endblock %}
+{% block page %}board{% endblock %}
+{% block body %}
+<form class="context" method="post" action="{{ url_for('watchlog.pick_day') }}">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <div>
+    <div class="lbl">Ship date</div>
+    <div class="datebox">
+      <a class="btn sq" href="{{ url_for('watchlog.day', ship_date=prev_day) }}" title="Previous day" aria-label="Previous day">‹</a>
+      <input type="date" name="ship_date" value="{{ ship_date }}" aria-label="Ship date" onchange="this.form.submit()">
+      <a class="btn sq" href="{{ url_for('watchlog.day', ship_date=next_day) }}" title="Next day" aria-label="Next day">›</a>
+      <button class="btn" type="submit">Go</button>
+    </div>
+  </div>
+  <div class="muted" style="font-size:13px;max-width:460px">
+    The ship date and watch are chosen here; the PC clock is never used to file a log.
+    The 1800–2400 watch is filed under the date it began.
+    {% if suggested != ship_date %}<br><a href="{{ url_for('watchlog.day', ship_date=suggested) }}">Go to {{ suggested }} ({{ suggested_why }})</a>{% endif %}
+  </div>
+</form>
+
+<main class="page">
+  <h1 class="pagetitle">{{ day.strftime('%A %d %B %Y') }}</h1>
+  {% if not has_logs %}
+  <div class="banner" style="margin-bottom:16px">
+    <b>New database.</b> Before entering the first watch, set opening balances for the counters in
+    <a href="{{ url_for('watchlog.settings') }}#opening">Settings → Opening balances</a>
+    so the first watch can show differences. You can also start now and add them later.
+  </div>
+  {% endif %}
+  <div class="board">
+    {% for w in watches %}
+    {% set cur = (w.status == 'draft') %}
+    <section class="plate tile {% if cur %}current{% endif %}">
+      <div class="plate-head" style="margin:0 8px"><h2>Watch {{ loop.index }}</h2>{% if cur %}<span class="right">OPEN DRAFT</span>{% endif %}</div>
+      <div class="time mono">{{ WATCH_LABELS[w.watch] | replace('-', '–') }}</div>
+      {% if w.status == 'not_started' %}
+        <div class="state"><span class="lamp grey"></span><b>Not started</b></div>
+        <div class="meta">{% if w.watch == 'w4' %}Carries forward to next day 0000–0600{% else %}&nbsp;{% endif %}</div>
+        <form class="actions" method="post" action="{{ url_for('watchlog.start_watch', ship_date=ship_date, watch=w.watch) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button class="btn" type="submit">Start watch</button>
+        </form>
+      {% elif w.status == 'draft' %}
+        <div class="state"><span class="lamp amber"></span><b>Draft</b>{% if w.saved_at %} · saved {{ w.saved_at[11:16] }}{% endif %}</div>
+        <div class="meta">{{ w.readings }} readings saved</div>
+        <div class="actions"><a class="btn primary" href="{{ url_for('watchlog.entry', ship_date=ship_date, watch=w.watch) }}">Resume draft ›</a></div>
+      {% else %}
+        <div class="state"><span class="lamp green"></span><b>Closed</b>{% if w.closed_at %} · {{ w.closed_at[11:16] }}{% endif %}</div>
+        <div class="meta">{{ w.readings }} readings</div>
+        <div class="actions"><a class="btn" href="{{ url_for('watchlog.entry', ship_date=ship_date, watch=w.watch) }}">Open record</a></div>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

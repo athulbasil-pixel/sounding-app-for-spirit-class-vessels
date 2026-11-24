@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page %}settings{% endblock %}
+{% block body %}
+<main class="page" style="max-width:1200px">
+  <h1 class="pagetitle">Settings</h1>
+
+  <section class="plate" style="margin-bottom:18px">
+    <div class="plate-head"><h2>Vessel</h2></div>
+    <form method="post" class="inline-form">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="action" value="vessel">
+      <label class="field">Vessel name (stored only in the local database)
+        <input name="vessel_name" value="{{ vessel.value if vessel else '' }}" maxlength="120"></label>
+      <button class="btn" type="submit">Save</button>
+    </form>
+    <p class="muted" style="font-size:12px;margin:10px 8px 0">Data folder: <span class="mono">{{ data_dir }}</span></p>
+  </section>
+
+  <section class="plate" id="opening" style="margin-bottom:18px">
+    <div class="plate-head"><h2>Opening balances</h2><span class="tag">counters only</span></div>
+    <p class="muted" style="margin:0 8px 12px;font-size:13px">
+      The reading each counter showed <b>just before the first watch</b> recorded in this database.
+      Used only for the first watch; after that every watch carries forward from the previous one.
+      Leave blank if unknown — the first difference will then show “no previous”.
+    </p>
+    <form method="post">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="action" value="opening">
+      <table class="log">
+        <tr><th>Sec</th><th>Counter</th><th>Unit</th><th>6-hour series</th><th>FW 4-hour series</th></tr>
+        {% for r in rows if r.field.is_counter %}
+        <tr>
+          <td>{{ r.section }}</td><td>{{ r.field.label }}</td><td class="muted">{{ r.field.unit or r.field.diff_unit }}</td>
+          <td><input class="odo small" name="ob__{{ r.field.id }}__6h" inputmode="decimal" value="{{ '%g' % r.ob6 if r.ob6 is not none else '' }}" aria-label="Opening balance {{ r.field.label }}"></td>
+          <td>{% if r.fw %}<input class="odo small" name="ob__{{ r.field.id }}__4h" inputmode="decimal" value="{{ '%g' % r.ob4 if r.ob4 is not none else '' }}" aria-label="Opening balance 4-hour {{ r.field.label }}">{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      <div style="margin-top:12px;text-align:right"><button class="btn primary" type="submit">Save opening balances</button></div>
+    </form>
+  </section>
+
+  <section class="plate">
+    <div class="plate-head"><h2>Fields</h2><span class="tag">not in use · rollover limit</span></div>
+    <p class="muted" style="margin:0 8px 12px;font-size:13px">
+      Mark a field <b>not in use</b> from a ship date onward to hide it from entry and stop it counting as missing.
+      Earlier watches keep their history. <b>Rollover limit</b>: the value at which a counter wraps back to zero
+      (default 1 000 000), used when the officer confirms a rollover.
+    </p>
+    <table class="log">
+      <tr><th>Sec</th><th>Field</th><th>Status</th><th>From ship date</th><th>Rollover limit</th><th></th></tr>
+      {% for r in rows %}
+      {% set fid = 'f-' ~ r.field.id %}
+      <tr id="{{ r.field.id }}">
+        <td>{{ r.section }}</td>
+        <td>{{ r.field.label }}{% if r.field.unit_status == 'unconfirmed' %} <span class="unit unconf">unit unconfirmed</span>{% endif %}</td>
+        <td><select name="not_in_use" form="{{ fid }}" aria-label="In use status"><option value="0">In use</option><option value="1" {% if r.not_in_use %}selected{% endif %}>Not in use</option></select></td>
+        <td><input type="date" name="effective_from" form="{{ fid }}" value="{{ r.effective_from or suggest_date }}" required aria-label="Effective from"></td>
+        <td>{% if r.field.is_counter %}<input class="odo small" name="rollover_limit" form="{{ fid }}" inputmode="decimal" placeholder="1000000" value="{{ '%d' % r.rollover_limit if r.rollover_limit else '' }}" aria-label="Rollover limit">{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td><form method="post" id="{{ fid }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="action" value="field">
+          <input type="hidden" name="field_id" value="{{ r.field.id }}">
+          <button class="btn" type="submit">Save</button></form></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+</main>
+{% endblock %}
