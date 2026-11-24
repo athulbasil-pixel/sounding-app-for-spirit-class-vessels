@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Review & close {{ ship_date }} {{ WATCH_LABELS[watch] }}{% endblock %}
+{% block page %}entry{% endblock %}
+{% block body %}
+<div class="context">
+  <a class="btn" href="{{ url_for('watchlog.entry', ship_date=ship_date, watch=watch) }}">‹ Back to entry</a>
+  <div style="font-size:16px"><b>Review &amp; close</b> · <span class="mono">{{ day.strftime('%d %b %Y') }} · {{ WATCH_LABELS[watch] | replace('-', '–') }}</span>
+    {% if log.version > 1 %}<span class="badge corr">correction v{{ log.version }}</span>{% endif %}</div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="lamp amber"></span>Draft{% if log.saved_at %} · saved {{ log.saved_at[11:16] }}{% endif %}</div>
+</div>
+
+<main class="page" style="max-width:1150px">
+  {% if log.version > 1 %}
+  <div class="banner">Correcting the closed record. Reason: “{{ log.correction_reason }}”. The original version stays unchanged; closing creates version {{ log.version }}.</div>
+  {% endif %}
+  <div class="grid2" style="margin-top:0;grid-template-columns:1.4fr 1fr">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <section class="plate">
+        <div class="plate-head"><span class="lamp {{ 'red' if review_items else 'green' }}"></span><h2>For review · {{ review_items|length }}</h2>
+          <span class="right">must be resolved before closing</span></div>
+        {% if review_items %}
+        <table class="log">
+          <tr><th>Sec</th><th>Equipment</th><th style="text-align:right">Previous → current</th><th></th></tr>
+          {% for i in review_items %}
+          <tr><td>{{ i.section }}</td><td>{{ i.label }}</td><td class="mono" style="text-align:right">{{ i.prev | num }} → {{ i.value | num }}</td>
+            <td><a href="{{ url_for('watchlog.entry', ship_date=ship_date, watch=watch) }}#sec-{{ i.section }}">Resolve ›</a></td></tr>
+          {% endfor %}
+        </table>
+        {% else %}<p class="muted" style="margin:0 8px">Nothing flagged.</p>{% endif %}
+      </section>
+
+      <section class="plate">
+        <div class="plate-head"><span class="lamp {{ 'grey' if missing else 'green' }}"></span><h2>Missing · {{ missing|length }}</h2>
+          <span class="right">enter, mark unavailable, or confirm as missing</span></div>
+        {% if missing %}
+        <table class="log">
+          <tr><th>Sec</th><th>Equipment</th><th></th></tr>
+          {% for i in missing %}
+          <tr><td>{{ i.section }}</td><td>{{ i.label }}</td>
+            <td><a href="{{ url_for('watchlog.entry', ship_date=ship_date, watch=watch) }}#sec-{{ i.section }}">Enter ›</a></td></tr>
+          {% endfor %}
+        </table>
+        {% else %}<p class="muted" style="margin:0 8px">All expected readings are entered.</p>{% endif %}
+      </section>
+
+      {% if unavailable %}
+      <section class="plate">
+        <div class="plate-head"><span class="lamp amber"></span><h2>Unavailable · {{ unavailable|length }}</h2></div>
+        <table class="log">
+          {% for i in unavailable %}<tr><td>{{ i.section }}</td><td>{{ i.label }}</td><td class="muted">{{ i.reason }}</td></tr>{% endfor %}
+        </table>
+      </section>
+      {% endif %}
+
+      {% if incomplete %}
+      <section class="plate">
+        <div class="plate-head"><span class="lamp amber"></span><h2>Incomplete intervals · {{ incomplete|length }}</h2>
+          <span class="right">reading saved, but previous reading missing</span></div>
+        <table class="log">
+          {% for i in incomplete %}<tr><td>{{ i.section }}</td><td>{{ i.label }}</td><td class="muted">{{ 'no previous / opening balance' if i.diff_status == 'no_previous' else 'previous watch reading missing' }}</td></tr>{% endfor %}
+        </table>
+      </section>
+      {% endif %}
+    </div>
+
+    <section class="plate" style="align-self:start;position:sticky;top:140px">
+      <div class="plate-head"><h2>Close watch</h2></div>
+      <form method="post" action="{{ url_for('watchlog.close', ship_date=ship_date, watch=watch) }}" style="display:flex;flex-direction:column;gap:14px;padding:0 8px">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <label class="field">Responsible officer
+          <select name="officer">
+            <option value="">— select —</option>
+            {% for o in officers %}<option {% if log.officer_name == o.display_name %}selected{% endif %}>{{ o.display_name }}</option>{% endfor %}
+          </select></label>
+        <label class="field">…or type a name / rank (added to the list on this PC only)
+          <input name="officer_new" maxlength="80" autocomplete="off" placeholder="e.g. 2/E Surname"></label>
+        <label class="field">Closure time (ship time)
+          <input class="mono" name="closed_at" value="{{ closure_default }}" required pattern="\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}"></label>
+        <label class="field">Remarks
+          <textarea name="remarks" rows="3" maxlength="4000">{{ log.remarks or '' }}</textarea></label>
+        {% if missing %}
+        <label style="display:flex;gap:10px;align-items:flex-start;font-size:14px">
+          <input type="checkbox" name="confirm_missing" value="1" style="width:22px;height:22px;flex:none">
+          I confirm the remaining {{ missing|length }} reading(s) are missing for this watch. They will be shown as MISSING in the record and PDF.</label>
+        {% endif %}
+        {% for p in problems %}<div class="flag-note" style="margin:0"><span class="lamp red"></span><span>{{ p }}</span></div>{% endfor %}
+        <button class="btn primary" type="submit" {% if problems %}disabled{% endif %}>Close watch &amp; generate PDF</button>
+        <p class="muted" style="font-size:12px;margin:0">After closing, the record is locked. A correction creates a new version with a reason; the original is kept.</p>
+      </form>
+    </section>
+  </div>
+</main>
+{% endblock %}

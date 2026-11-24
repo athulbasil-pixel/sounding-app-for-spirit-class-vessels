@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block page %}history{% endblock %}
+{% block body %}
+<form class="context" method="get">
+  <label class="field">From <input type="date" name="from" value="{{ d_from }}"></label>
+  <label class="field">To <input type="date" name="to" value="{{ d_to }}"></label>
+  <label class="field">Watch
+    <select name="watch"><option value="">All watches</option>
+      {% for w in WATCHES %}<option value="{{ w }}" {% if watch == w %}selected{% endif %}>{{ WATCH_LABELS[w] }}</option>{% endfor %}</select></label>
+  <label class="field">Status
+    <select name="status">
+      {% for v, l in [('', 'All'), ('closed', 'Closed'), ('draft', 'Draft'), ('corrected', 'Corrected'), ('missing', 'Has missing')] %}
+      <option value="{{ v }}" {% if (status or '') == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+  <button class="btn" type="submit" style="align-self:flex-end">Search</button>
+</form>
+<main class="page" style="max-width:1200px">
+  <section class="plate">
+    <div class="plate-head"><h2>Watch records · {{ rows|length }}</h2></div>
+    {% if rows %}
+    <table class="log">
+      <tr><th></th><th>Ship date</th><th>Watch</th><th>Status</th><th>Officer</th><th>Closed (ship time)</th><th>Missing</th><th>Unavail.</th><th></th></tr>
+      {% for r in rows %}
+      <tr onclick="location.href='{{ url_for('watchlog.record', log_id=r.id) }}'" style="cursor:pointer">
+        <td><span class="lamp {{ 'green' if r.status == 'closed' and not r.missing else 'amber' }}"></span></td>
+        <td class="mono"><a href="{{ url_for('watchlog.record', log_id=r.id) }}">{{ r.ship_date }}</a></td>
+        <td class="mono">{{ WATCH_LABELS[r.watch] | replace('-', '–') }}</td>
+        <td>{{ r.status }}{% if r.correction_draft %} <span class="badge corr">correction draft v{{ r.version }}</span>{% elif r.version > 1 %} <span class="badge corr">corrected v{{ r.version }}</span>{% endif %}</td>
+        <td>{{ r.officer or '—' }}</td>
+        <td class="mono">{{ (r.closed_at or '')[:16] | replace('T', ' ') }}</td>
+        <td>{{ r.missing }}</td><td>{{ r.unavailable }}</td>
+        <td>{% if r.status == 'closed' %}<a href="{{ url_for('watchlog.pdf', log_id=r.id) }}" target="_blank" rel="noopener" onclick="event.stopPropagation()">PDF</a>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}<p class="muted" style="margin:0 8px">No watch records in this range.</p>{% endif %}
+  </section>
+</main>
+{% endblock %}

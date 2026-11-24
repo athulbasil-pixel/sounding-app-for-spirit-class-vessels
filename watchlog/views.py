@@ -31,6 +31,21 @@ def inject():
             "app_version": __version__, "vessel_name": vessel_name()}
 
 
+@bp.app_template_filter("num")
+def num_filter(v):
+    """1234567.5 -> '1 234 567.5' (thin grouping, no float noise)."""
+    if v is None or v == "":
+        return ""
+    try:
+        x = round(float(v), 6)
+    except (TypeError, ValueError):
+        return v
+    if x.is_integer():
+        return f"{int(x):,}".replace(",", " ")
+    i, d = f"{x}".split(".")
+    return f"{int(i):,}".replace(",", " ") + "." + d
+
+
 def vessel_name() -> str:
     r = get_db().execute("SELECT value FROM meta WHERE key='vessel_name'").fetchone()
     return r["value"] if r and r["value"] else "Vessel name not set"
@@ -118,11 +133,13 @@ def entry(ship_date, watch):
     except logic.ReadingError:
         abort(404)
     conn = get_db()
-    log = logic.current_log(conn, ship_date, watch)
+    log = logic.editing_log(conn, ship_date, watch)
     if log is None:
         return redirect(url_for("watchlog.day", ship_date=ship_date))
+    if log["status"] == "closed":
+        return redirect(url_for("watchlog.record", log_id=log["id"]))
     return render_template("entry.html", ship_date=ship_date, watch=watch, day=date.fromisoformat(ship_date),
-                           watches=logic.day_overview(conn, ship_date), layout=layout_json())
+                           watches=logic.day_overview(conn, ship_date), layout=layout_json(), log=log)
 
 
 # ---------------------------------------------------------------- API
@@ -157,7 +174,7 @@ def api_remarks(ship_date, watch):
         logic.save_remarks(get_db(), ship_date, watch, str(body.get("remarks", ""))[:4000])
     except logic.ReadingError as e:
         return api_error(str(e))
-    return jsonify({"ok": True, "saved_at": logic.current_log(get_db(), ship_date, watch)["saved_at"]})
+    return jsonify({"ok": True, "saved_at": logic.editing_log(get_db(), ship_date, watch)["saved_at"]})
 
 
 @bp.route("/api/watch/<ship_date>/<watch>/event", methods=["POST", "DELETE"])
@@ -168,7 +185,7 @@ def api_event(ship_date, watch):
     fid, series, point = body.get("field", ""), body.get("series", "6h"), body.get("point", watch)
     if fid not in r.fields or series not in ("6h", "4h") or point not in logic.series_points(series):
         return api_error("Unknown reading")
-    log = logic.current_log(conn, ship_date, watch)
+    log = logic.editing_log(conn, ship_date, watch)
     if log is None or log["status"] != "draft":
         return api_error("Watch not editable")
     try:
@@ -209,6 +226,18 @@ def settings():
                             logic.set_opening_balance(conn, f.id, series, v)
                             n += 1
                 flash("Opening balances saved.")
+            elif action == "officer_add":
+                logic.get_or_create_officer(conn, request.form.get("name", ""), request.form.get("rank") or None)
+                flash("Officer added.")
+            elif action == "officer_toggle":
+                conn.execute("UPDATE officer SET active = 1 - active WHERE id=?", (int(request.form.get("id", 0)),))
+                flash("Officer list updated.")
+            elif action == "lan_pin":
+                if request.remote_addr not in ("127.0.0.1", "::1"):
+                    abort(403)                      # PIN can only be changed at the ECR PC itself
+                from .records import set_lan_pin
+                set_lan_pin(request.form.get("pin", "").strip() or None)
+                flash("Tablet PIN saved." if request.form.get("pin") else "Tablet PIN removed.")
             elif action == "field":
                 fid = request.form.get("field_id", "")
                 if fid not in r.fields:
@@ -237,6 +266,11 @@ def settings():
                          "ob6": logic.opening_balance(conn, f.id, "6h"),
                          "ob4": logic.opening_balance(conn, f.id, "4h") if f.id in r.fw_fields else None,
                          "fw": f.id in r.fw_fields})
+    from .records import lan_addresses
+    pin_set = conn.execute("SELECT 1 FROM meta WHERE key='lan_pin_hash'").fetchone() is not None
     return render_template("settings.html", rows=rows, suggest_date=today_suggest,
+                           officers=logic.officers(conn, active_only=False), pin_set=pin_set,
+                           lan_mode=current_app.config.get("LAN_MODE"), lan_ips=lan_addresses(),
+                           port=request.host.rsplit(":", 1)[-1] if ":" in request.host else "5080",
                            data_dir=current_app.config["DATA_DIR"],
                            vessel=conn.execute("SELECT value FROM meta WHERE key='vessel_name'").fetchone())

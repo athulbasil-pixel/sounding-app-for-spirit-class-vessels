@@ -18,7 +18,7 @@
   <nav>
     <a href="{{ url_for('watchlog.home') }}" {% if pg == 'board' %}aria-current="page"{% endif %}>Watch board</a>
     {% if pg == 'entry' %}<a href="#" aria-current="page">Watch entry</a>{% endif %}
-    <a class="soon" title="Coming in Phase 2">History</a>
+    <a href="{{ url_for('watchlog.history_page') }}" {% if pg == 'history' %}aria-current="page"{% endif %}>History</a>
     <a class="soon" title="Coming in Phase 3">Reports</a>
     <a href="{{ url_for('watchlog.settings') }}" {% if pg == 'settings' %}aria-current="page"{% endif %}>Settings</a>
   </nav>

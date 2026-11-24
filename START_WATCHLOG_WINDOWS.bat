@@ -14,8 +14,9 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 :deps
-if exist ".venv\installed.flag" goto run
-echo Installing components (first run only)...
+rem reinstall only when requirements.txt changed since the last install
+if exist ".venv\installed.flag" fc /b requirements.txt ".venv\installed.flag" >nul 2>nul && goto run
+echo Installing components (first run / after an update)...
 if exist "wheels\" (
   ".venv\Scripts\python.exe" -m pip install --no-index --find-links wheels -r requirements.txt
 ) else (
@@ -27,7 +28,7 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-echo ok> ".venv\installed.flag"
+copy /y requirements.txt ".venv\installed.flag" >nul
 
 :run
 ".venv\Scripts\python.exe" run.py %*

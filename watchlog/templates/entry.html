@@ -38,6 +38,10 @@
 </div>
 
 <main class="page">
+  {% if log.version > 1 %}
+  <div class="banner">Correction draft <b>v{{ log.version }}</b> — reason: “{{ log.correction_reason }}”. The closed original stays unchanged until this correction is closed.
+    <a href="{{ url_for('watchlog.record', log_id=log.supersedes_id) }}">View closed record</a></div>
+  {% endif %}
   <div class="entry-layout">
     <aside class="rail plate" style="padding:10px 6px">
       <div class="plate-head" style="margin:4px 10px 6px"><h2>Sections</h2></div>
@@ -57,7 +61,7 @@
   <div class="stat"><span class="lamp red"></span>For review <b data-stat-review>–</b></div>
   <span class="spacer"></span>
   <span class="keys"><kbd>Enter</kbd> next · <kbd>Shift</kbd>+<kbd>Enter</kbd> back · <kbd>Esc</kbd> undo edit · <kbd>Ctrl</kbd>+<kbd>S</kbd> save</span>
-  <button class="btn primary" type="button" disabled title="Review &amp; close arrives in Phase 2">Review &amp; close ›</button>
+  <a class="btn primary" href="{{ url_for('watchlog.review', ship_date=ship_date, watch=watch) }}" data-review>Review &amp; close ›</a>
 </footer>
 
 <dialog id="jump" aria-label="Jump to section">

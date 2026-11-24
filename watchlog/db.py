@@ -82,7 +82,26 @@ CREATE TABLE IF NOT EXISTS field_setting (
     field_id TEXT PRIMARY KEY,
     rollover_limit REAL
 );
+
+CREATE TABLE IF NOT EXISTS pdf_file (
+    id INTEGER PRIMARY KEY,
+    log_id INTEGER NOT NULL REFERENCES watch_log(id),
+    filename TEXT NOT NULL,
+    rel_path TEXT NOT NULL,                  -- relative to the data folder
+    sha256 TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S','now','localtime'))
+);
 """
+
+# columns added after schema v1 (ALTER TABLE ... ADD COLUMN when missing)
+MIGRATIONS = {
+    "watch_log": {
+        "officer_name": "TEXT",              # name snapshot at closure (record must not change if officer renamed)
+        "closed_recorded_at": "TEXT",        # PC time the close button was pressed
+        "correction_created_at": "TEXT",
+        "snapshot_json": "TEXT",             # full computed record frozen at closure
+    },
+}
 
 DEFAULT_ROLLOVER = 1_000_000
 
@@ -101,7 +120,13 @@ def init_db(path: str | Path) -> None:
     conn = connect(path)
     try:
         conn.executescript(SCHEMA)
-        conn.execute("INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', '1')")
+        for table, cols in MIGRATIONS.items():
+            have = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+            for col, decl in cols.items():
+                if col not in have:
+                    conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+        conn.execute("INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', '2')")
+        conn.execute("UPDATE meta SET value='2' WHERE key='schema_version'")
     finally:
         conn.close()
 

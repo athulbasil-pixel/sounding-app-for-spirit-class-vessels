@@ -372,3 +372,16 @@ table.log select, table.log input[type=date] { font: inherit; color: var(--text)
 [data-theme="night"] table.log input[type=date] { color-scheme: dark; }
 table.log tr:hover td { cursor: default; }
 @media (max-width: 1000px) { .sections > #sec-remarks { display: block; } }
+@media (max-width: 1000px) {
+  .grid2 { grid-template-columns: 1fr !important; }
+  .grid2 > .plate[style*="sticky"] { position: static !important; }
+  table.log { font-size: 13px; }
+}
+
+.plate { overflow-x: auto; }
+@media (max-width: 1000px) {
+  .statusbar { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; }
+  .statusbar .stat { font-size: 12px; }
+  .statusbar .spacer { display: none; }
+  .statusbar .btn.primary { margin-left: auto; }
+}

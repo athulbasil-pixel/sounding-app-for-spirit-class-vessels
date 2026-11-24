@@ -342,6 +342,8 @@
     });
 
     $("[data-open-jump]").addEventListener("click", openJump);
+    const rv = $("[data-review]");
+    if (rv) rv.addEventListener("click", async (e) => { e.preventDefault(); await flushAll(); location.href = rv.href; });
     const dlg = $("#jump");
     dlg.addEventListener("click", (e) => {
       const b = e.target.closest("[data-jump]");

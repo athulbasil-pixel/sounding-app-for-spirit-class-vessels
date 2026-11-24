@@ -47,9 +47,13 @@
         <div class="meta">{{ w.readings }} readings saved</div>
         <div class="actions"><a class="btn primary" href="{{ url_for('watchlog.entry', ship_date=ship_date, watch=w.watch) }}">Resume draft ›</a></div>
       {% else %}
-        <div class="state"><span class="lamp green"></span><b>Closed</b>{% if w.closed_at %} · {{ w.closed_at[11:16] }}{% endif %}</div>
-        <div class="meta">{{ w.readings }} readings</div>
-        <div class="actions"><a class="btn" href="{{ url_for('watchlog.entry', ship_date=ship_date, watch=w.watch) }}">Open record</a></div>
+        <div class="state"><span class="lamp green"></span><b>Closed</b>{% if w.closed_at %} · {{ w.closed_at[11:16] }}{% endif %}{% if w.version > 1 %} <span class="badge corr">v{{ w.version }}</span>{% endif %}</div>
+        <div class="meta">{{ w.officer or '' }}{% if w.correcting %} · <b>correction in progress</b>{% endif %}</div>
+        <div class="actions">
+          <a class="btn" href="{{ url_for('watchlog.record', log_id=w.log_id) }}">Open record</a>
+          <a class="btn" href="{{ url_for('watchlog.pdf', log_id=w.log_id) }}" target="_blank" rel="noopener">PDF</a>
+          {% if w.correcting %}<a class="btn" href="{{ url_for('watchlog.entry', ship_date=ship_date, watch=w.watch) }}">Continue correction</a>{% endif %}
+        </div>
       {% endif %}
     </section>
     {% endfor %}

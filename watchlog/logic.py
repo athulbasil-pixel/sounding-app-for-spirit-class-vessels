@@ -4,8 +4,10 @@ Nothing here imports Flask so it can be unit-tested directly.
 """
 from __future__ import annotations
 
+import json
 import re
 import sqlite3
+from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
@@ -76,16 +78,35 @@ def _watch_key(ship_date: str, watch: str) -> tuple[str, int]:
 # ---------------------------------------------------------------- logs
 
 def current_log(conn: sqlite3.Connection, ship_date: str, watch: str):
-    return conn.execute(
-        "SELECT * FROM watch_log WHERE ship_date=? AND watch=? ORDER BY version DESC LIMIT 1",
-        (ship_date, watch)).fetchone()
+    """The *effective* record: latest closed version; else the original draft.
+
+    A correction draft (version > 1) is not effective until it is closed, so
+    other watches keep carrying forward from the closed record meanwhile.
+    """
+    r = conn.execute("SELECT * FROM watch_log WHERE ship_date=? AND watch=? AND status='closed' "
+                     "ORDER BY version DESC LIMIT 1", (ship_date, watch)).fetchone()
+    if r:
+        return r
+    return conn.execute("SELECT * FROM watch_log WHERE ship_date=? AND watch=? AND version=1",
+                        (ship_date, watch)).fetchone()
+
+
+def editing_log(conn: sqlite3.Connection, ship_date: str, watch: str):
+    """The draft being edited (original or correction) — else the effective record."""
+    r = conn.execute("SELECT * FROM watch_log WHERE ship_date=? AND watch=? AND status='draft' "
+                     "ORDER BY version DESC LIMIT 1", (ship_date, watch)).fetchone()
+    return r or current_log(conn, ship_date, watch)
+
+
+def log_by_id(conn, log_id: int):
+    return conn.execute("SELECT * FROM watch_log WHERE id=?", (log_id,)).fetchone()
 
 
 def get_or_create_log(conn: sqlite3.Connection, ship_date: str, watch: str):
     ship_date, watch = check_date(ship_date), check_watch(watch)
     conn.execute("INSERT OR IGNORE INTO watch_log(ship_date, watch, version, status) VALUES (?,?,1,'draft')",
                  (ship_date, watch))
-    return current_log(conn, ship_date, watch)
+    return editing_log(conn, ship_date, watch)
 
 
 def earliest_log(conn: sqlite3.Connection) -> tuple[str, int] | None:
@@ -175,9 +196,14 @@ class PointValue:
     point: str | None = None
 
 
+# While computing a correction draft, its own (date, watch) must read from the draft,
+# while every other watch reads from the effective records.
+_LOG_OVERRIDE: ContextVar[dict] = ContextVar("_LOG_OVERRIDE", default={})
+
+
 def reading_at(conn, field_id: str, series: str, ship_date: str, point: str, _earliest=None) -> PointValue:
     watch, slot = storage_of(series, point)
-    log = current_log(conn, ship_date, watch)
+    log = _LOG_OVERRIDE.get().get((ship_date, watch)) or current_log(conn, ship_date, watch)
     if log is None:
         earliest = _earliest if _earliest is not None else earliest_log(conn)
         if earliest is None or _watch_key(ship_date, watch) < earliest:
@@ -282,9 +308,19 @@ def _lamp(item: dict) -> str:
     return "green"
 
 
-def log_state(conn, reg: Registry, ship_date: str, watch: str) -> dict:
+def log_state(conn, reg: Registry, ship_date: str, watch: str, log=None) -> dict:
+    """Live computed state of one watch record (default: the one being edited)."""
     ship_date, watch = check_date(ship_date), check_watch(watch)
-    log = current_log(conn, ship_date, watch)
+    if log is None:
+        log = editing_log(conn, ship_date, watch)
+    token = _LOG_OVERRIDE.set({(ship_date, watch): log} if log is not None else {})
+    try:
+        return _log_state(conn, reg, ship_date, watch, log)
+    finally:
+        _LOG_OVERRIDE.reset(token)
+
+
+def _log_state(conn, reg, ship_date, watch, log) -> dict:
     earliest = earliest_log(conn)
     items = []
     for it in reg.entry_items(watch):
@@ -335,9 +371,29 @@ def log_state(conn, reg: Registry, ship_date: str, watch: str) -> dict:
 
     return {
         "ship_date": ship_date, "watch": watch,
-        "log": dict(log) if log else None,
+        "log": _log_public(log),
         "items": items, "sections": sections, "totals": totals, "calcs": calcs,
     }
+
+
+def _log_public(log) -> dict | None:
+    if log is None:
+        return None
+    d = dict(log)
+    d.pop("snapshot_json", None)
+    return d
+
+
+def record_state(conn, reg: Registry, log) -> dict:
+    """What a record shows: the frozen snapshot for closed versions, live state for drafts."""
+    if log["status"] == "closed" and log["snapshot_json"]:
+        st = json.loads(log["snapshot_json"])
+        st["log"] = _log_public(log)
+        st["frozen"] = True
+        return st
+    st = log_state(conn, reg, log["ship_date"], log["watch"], log)
+    st["frozen"] = False
+    return st
 
 
 # ---------------------------------------------------------------- writes
@@ -346,20 +402,25 @@ def _valid_slots(reg: Registry, watch: str) -> dict[tuple[str, str], dict]:
     return {(i["field"], i["slot"]): i for i in reg.entry_items(watch) if not i["linked"]}
 
 
-def save_reading(conn, reg: Registry, ship_date: str, watch: str, field_id: str, slot: str,
-                 raw: str | None, status: str = "entered", reason: str | None = None) -> None:
-    log = current_log(conn, check_date(ship_date), check_watch(watch))
+def _draft_or_error(conn, ship_date, watch):
+    log = editing_log(conn, check_date(ship_date), check_watch(watch))
     if log is None:
         raise ReadingError("Watch not started")
     if log["status"] != "draft":
-        raise ReadingError("Watch is closed — make a correction instead")
+        raise ReadingError("Watch is closed — start a correction to change it")
+    return log
+
+
+def save_reading(conn, reg: Registry, ship_date: str, watch: str, field_id: str, slot: str,
+                 raw: str | None, status: str = "entered", reason: str | None = None) -> None:
+    log = _draft_or_error(conn, ship_date, watch)
     if (field_id, slot) not in _valid_slots(reg, watch):
         raise ReadingError(f"{field_id}@{slot} is not entered in this watch")
 
     if status == "unavailable":
         if not (reason and reason.strip()):
             raise ReadingError("Give a reason for an unavailable reading")
-        value, qual, raw_text = None, None, None
+        value, qual, raw_text, reason = None, None, None, reason.strip()[:200]
     elif status == "entered":
         value, qual = parse_reading(raw)
         raw_text = None if value is None else str(raw).strip()
@@ -382,11 +443,106 @@ def save_reading(conn, reg: Registry, ship_date: str, watch: str, field_id: str,
 
 
 def save_remarks(conn, ship_date, watch, remarks: str) -> None:
-    log = current_log(conn, ship_date, watch)
-    if log is None or log["status"] != "draft":
-        raise ReadingError("Watch not editable")
+    log = _draft_or_error(conn, ship_date, watch)
     conn.execute("UPDATE watch_log SET remarks=?, saved_at=? WHERE id=?", (remarks, now_iso(), log["id"]))
 
+
+# ---------------------------------------------------------------- officers / close / correct
+
+def officers(conn, active_only=True) -> list:
+    q = "SELECT * FROM officer" + (" WHERE active=1" if active_only else "") + " ORDER BY display_name"
+    return conn.execute(q).fetchall()
+
+
+def get_or_create_officer(conn, name: str, rank: str | None = None) -> int:
+    name = " ".join((name or "").split())[:80]
+    if not name:
+        raise ReadingError("Enter the responsible officer")
+    r = conn.execute("SELECT id FROM officer WHERE display_name=? COLLATE NOCASE", (name,)).fetchone()
+    if r:
+        conn.execute("UPDATE officer SET active=1 WHERE id=?", (r["id"],))
+        return r["id"]
+    return conn.execute("INSERT INTO officer(display_name, rank) VALUES (?,?)", (name, rank)).lastrowid
+
+
+def parse_ship_time(s: str) -> str:
+    s = (s or "").strip().replace(" ", "T")
+    for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt).strftime("%Y-%m-%dT%H:%M")
+        except ValueError:
+            pass
+    raise ReadingError("Enter the closure time as YYYY-MM-DD HH:MM")
+
+
+def close_check(st: dict) -> list[str]:
+    """Reasons the watch cannot be closed yet (empty list = may close)."""
+    problems = []
+    if st["totals"]["review"]:
+        problems.append(f'{st["totals"]["review"]} reading(s) flagged for review must be resolved '
+                        "(confirm rollover / meter replaced, re-enter, or mark unavailable)")
+    return problems
+
+
+def close_log(conn, reg: Registry, ship_date: str, watch: str, officer_name: str, closed_at: str,
+              remarks: str | None = None, confirm_missing: bool = False):
+    """Close the draft: record officer + closure time, freeze a snapshot. Returns the closed log row."""
+    log = _draft_or_error(conn, ship_date, watch)
+    closed_at = parse_ship_time(closed_at)
+    if remarks is not None:
+        conn.execute("UPDATE watch_log SET remarks=? WHERE id=?", (remarks[:4000], log["id"]))
+    st = log_state(conn, reg, ship_date, watch, log_by_id(conn, log["id"]))
+    problems = close_check(st)
+    if problems:
+        raise ReadingError("; ".join(problems))
+    if st["totals"]["missing"] and not confirm_missing:
+        raise ReadingError(f'{st["totals"]["missing"]} reading(s) are missing — tick the confirmation to close anyway')
+    oid = get_or_create_officer(conn, officer_name)
+    name = conn.execute("SELECT display_name FROM officer WHERE id=?", (oid,)).fetchone()["display_name"]
+    conn.execute("UPDATE watch_log SET status='closed', officer_id=?, officer_name=?, closed_at=?, "
+                 "closed_recorded_at=?, missing_confirmed=? WHERE id=?",
+                 (oid, name, closed_at, now_iso(), int(bool(st["totals"]["missing"])), log["id"]))
+    closed = log_by_id(conn, log["id"])
+    st = log_state(conn, reg, ship_date, watch, closed)
+    conn.execute("UPDATE watch_log SET snapshot_json=? WHERE id=?", (json.dumps(st), log["id"]))
+    return log_by_id(conn, log["id"])
+
+
+def start_correction(conn, ship_date: str, watch: str, reason: str):
+    """Copy the closed record into a new draft version. The closed original is never modified."""
+    reason = " ".join((reason or "").split())[:300]
+    if not reason:
+        raise ReadingError("Give the reason for the correction")
+    if conn.execute("SELECT 1 FROM watch_log WHERE ship_date=? AND watch=? AND status='draft'",
+                    (ship_date, watch)).fetchone():
+        raise ReadingError("A draft already exists for this watch")
+    base = current_log(conn, ship_date, watch)
+    if base is None or base["status"] != "closed":
+        raise ReadingError("Only a closed watch can be corrected")
+    new_id = conn.execute(
+        "INSERT INTO watch_log(ship_date, watch, status, version, supersedes_id, correction_reason, "
+        "correction_created_at, remarks, saved_at) VALUES (?,?,'draft',?,?,?,?,?,?)",
+        (ship_date, watch, base["version"] + 1, base["id"], reason, now_iso(), base["remarks"], now_iso())).lastrowid
+    conn.execute("INSERT INTO reading(log_id, field_id, slot, value_num, qualifier, raw_text, status, "
+                 "unavailable_reason, entered_at) SELECT ?, field_id, slot, value_num, qualifier, raw_text, "
+                 "status, unavailable_reason, entered_at FROM reading WHERE log_id=?", (new_id, base["id"]))
+    return log_by_id(conn, new_id)
+
+
+def cancel_correction(conn, ship_date: str, watch: str) -> None:
+    log = editing_log(conn, ship_date, watch)
+    if log is None or log["status"] != "draft" or log["version"] < 2:
+        raise ReadingError("No correction draft to discard")
+    conn.execute("DELETE FROM watch_log WHERE id=?", (log["id"],))
+
+
+def versions(conn, ship_date: str, watch: str) -> list:
+    return conn.execute("SELECT id, version, status, closed_at, officer_name, correction_reason, "
+                        "correction_created_at, closed_recorded_at FROM watch_log WHERE ship_date=? AND watch=? "
+                        "ORDER BY version", (ship_date, watch)).fetchall()
+
+
+# ---------------------------------------------------------------- overviews
 
 def day_overview(conn, ship_date: str) -> list[dict]:
     out = []
@@ -395,7 +551,45 @@ def day_overview(conn, ship_date: str) -> list[dict]:
         if log is None:
             out.append({"watch": w, "status": "not_started"})
             continue
+        ed = editing_log(conn, ship_date, w)
         n = conn.execute("SELECT COUNT(*) c FROM reading WHERE log_id=? AND status<>'missing'", (log["id"],)).fetchone()["c"]
-        out.append({"watch": w, "status": log["status"], "saved_at": log["saved_at"],
-                    "closed_at": log["closed_at"], "readings": n})
+        out.append({"watch": w, "status": log["status"], "saved_at": log["saved_at"], "log_id": log["id"],
+                    "closed_at": log["closed_at"], "officer": log["officer_name"], "version": log["version"],
+                    "correcting": ed["id"] != log["id"], "readings": n})
+    return out
+
+
+def history(conn, reg: Registry, date_from: str, date_to: str, watch: str | None = None,
+            status: str | None = None, limit: int = 500) -> list[dict]:
+    q = "SELECT * FROM watch_log WHERE ship_date BETWEEN ? AND ?"
+    args = [check_date(date_from), check_date(date_to)]
+    if watch:
+        q += " AND watch=?"
+        args.append(check_watch(watch))
+    q += " ORDER BY ship_date DESC, watch DESC, version DESC"
+    out = []
+    for r in conn.execute(q, args).fetchall():
+        eff = current_log(conn, r["ship_date"], r["watch"])
+        is_eff = eff is not None and eff["id"] == r["id"]
+        is_corr_draft = r["status"] == "draft" and r["version"] > 1
+        if not (is_eff or is_corr_draft):
+            continue                       # superseded versions are reached from the record page
+        if r["status"] == "closed" and r["snapshot_json"]:
+            totals = json.loads(r["snapshot_json"])["totals"]
+        else:
+            totals = log_state(conn, reg, r["ship_date"], r["watch"], r)["totals"]
+        if status == "closed" and r["status"] != "closed":
+            continue
+        if status == "draft" and r["status"] != "draft":
+            continue
+        if status == "corrected" and r["version"] < 2:
+            continue
+        if status == "missing" and not totals["missing"]:
+            continue
+        out.append({"id": r["id"], "ship_date": r["ship_date"], "watch": r["watch"], "status": r["status"],
+                    "version": r["version"], "officer": r["officer_name"], "closed_at": r["closed_at"],
+                    "missing": totals["missing"], "unavailable": totals["unavailable"], "review": totals["review"],
+                    "correction_draft": is_corr_draft})
+        if len(out) >= limit:
+            break
     return out

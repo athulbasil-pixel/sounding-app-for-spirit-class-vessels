@@ -2,15 +2,17 @@
 
 This app replaces the Excel engine-room watch and sounding workbook with an offline browser app built on Flask and SQLite.
 
-**Status: Phase 1, core watch entry.** Closing a watch, history, PDFs and LAN mode for tablets arrive in Phase 2. Reports arrive in Phase 3.
+**Status: Phase 2: watch entry, close, history, corrections, PDF and tablet (LAN) mode.** Reports (day, week and month totals) arrive in Phase 3.
 
 ## Start (Windows)
 
 1. Install **Python 3.11 or newer** from python.org and tick *Add Python to PATH*.
 2. Double-click **`START_WATCHLOG_WINDOWS.bat`**.
-   - The first run creates `.venv` and installs Flask and PyYAML. This needs internet once, unless a `wheels\` folder with the packages sits next to the script.
+   - The first run creates `.venv` and installs Flask, PyYAML and fpdf2. After an update that adds packages, it installs them automatically. This needs internet once, unless a `wheels\` folder with the packages sits next to the script.
    - After that the app starts offline and opens **http://127.0.0.1:5080/** in your browser.
 3. Keep the black console window open while using the log. Close it, or press Ctrl+C, to stop.
+
+To use tablets on the ship's network, see *Tablet access* below.
 
 Your entries are saved in `%LOCALAPPDATA%\MarineSense\WatchLog\watchlog.sqlite3`. They survive closing the browser, closing the app and restarting the PC.
 
@@ -31,11 +33,31 @@ To run the tests, double-click `TEST_WATCHLOG_WINDOWS.bat`, or run `.venv\Script
 - **Unavailable readings** are recorded with a reason. Values with qualifiers such as `74+` keep the exact text typed.
 - **Settings:** vessel name, opening balances for the first watch, a "not in use" switch per field (with the ship date it takes effect) and the rollover limit for each counter.
 
+## What Phase 2 adds
+
+- **Review & close:** lists readings flagged for review (these must be resolved first), missing readings, unavailable readings and incomplete intervals.
+  - The officer picks or types their name and enters the closure time in ship time. The PC time is also recorded.
+  - Closing with missing readings needs a ticked confirmation.
+- **Locked records:** a closed watch is read-only, and a frozen copy of the full record is stored at closing.
+- **Corrections:** a correction needs a reason and creates **version 2, 3, …**. The original closed version is never changed and stays viewable, marked *superseded*.
+  - Until a correction is closed, other watches keep calculating from the closed original.
+- **History:** search by date range, watch and status (closed, draft, corrected, has missing). Each record shows its readings, calculated values, remarks, officer and version history.
+- **PDF on closing:** A4, named `YYYY-MM-DD_HHMM-HHMM_Watch_Log.pdf` (`_v2` for a correction), with table headings repeated across pages. Missing readings are shown in red and corrections get a banner.
+  - From the record page you can open, download or print it. PDFs are stored under `%LOCALAPPDATA%\MarineSense\WatchLog\pdfs\`.
+
+## Tablet access (LAN, opt-in)
+
+1. On the ECR PC, open **Settings → Tablet access** and set a 4–12 digit PIN. The PIN can only be changed on the ECR PC itself.
+2. Start the app with **`START_WATCHLOG_LAN_WINDOWS.bat`**. The console shows the address to open on the tablet, for example `http://192.168.x.x:5080/`.
+3. If Windows asks about the firewall, allow Python on **private networks only**.
+
+The connection is plain HTTP, so use it only on the ship's internal network. In normal mode (`START_WATCHLOG_WINDOWS.bat`) other machines are always refused.
+
 ## Repository layout
 
 | Path | Contents |
 |---|---|
-| `watchlog/` | The Flask app: `logic.py` (rules and calculations), `registry.py`, `db.py`, `views.py`, templates and static files |
+| `watchlog/` | The Flask app: `logic.py` (rules and calculations), `records.py` (close, corrections, history, PDF and LAN), `pdf.py`, `registry.py`, `db.py`, `views.py`, templates and static files |
 | `docs/field_registry.yaml` | Every workbook field. The entry screen and calculations are built from this file |
 | `docs/data_model.md` | Schema and calculation rules |
 | `docs/WATCHLOG_BUILD_PROMPT.md` | Build brief, phase plan and approved design decisions |

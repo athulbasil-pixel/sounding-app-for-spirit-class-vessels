@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Record {{ log.ship_date }} {{ WATCH_LABELS[log.watch] }} v{{ log.version }}{% endblock %}
+{% block page %}history{% endblock %}
+{% block body %}
+<div class="context">
+  <a class="btn" href="{{ url_for('watchlog.history_page') }}">‹ History</a>
+  <a class="btn" href="{{ url_for('watchlog.day', ship_date=log.ship_date) }}">Watch board</a>
+  <div style="font-size:16px"><b>{{ day.strftime('%a %d %b %Y') }}</b> · <span class="mono">{{ WATCH_LABELS[log.watch] | replace('-', '–') }}</span>
+    <span class="badge {{ 'corr' if log.version > 1 }}">v{{ log.version }} of {{ versions|length }}</span>
+    {% if log.status == 'closed' and log.id != effective_id %}<span class="badge corr">superseded</span>{% endif %}</div>
+  <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+    {% if log.status == 'closed' %}
+      <a class="btn" href="{{ url_for('watchlog.pdf', log_id=log.id) }}" target="_blank" rel="noopener">Open PDF</a>
+      <a class="btn" href="{{ url_for('watchlog.pdf', log_id=log.id, download=1) }}">Download</a>
+      <button class="btn" type="button" onclick="var w=window.open('{{ url_for('watchlog.pdf', log_id=log.id) }}');if(w){w.addEventListener('load',function(){w.print();});}">Print</button>
+    {% else %}
+      <a class="btn primary" href="{{ url_for('watchlog.entry', ship_date=log.ship_date, watch=log.watch) }}">Continue draft ›</a>
+    {% endif %}
+  </div>
+</div>
+
+<main class="page" style="max-width:1200px">
+  {% if log.version > 1 %}
+  <div class="banner"><b>Corrected record (version {{ log.version }}).</b> Reason: “{{ log.correction_reason }}” · correction started {{ (log.correction_created_at or '')[:16] | replace('T', ' ') }}.
+    The earlier version is kept below under Versions.</div>
+  {% endif %}
+  {% if log.status == 'closed' and log.id != effective_id %}
+  <div class="banner">This version was superseded by a later correction. It is kept unchanged for the record.</div>
+  {% endif %}
+
+  <div class="grid2" style="margin-top:0;grid-template-columns:1.6fr 1fr">
+    <section class="plate">
+      <div class="plate-head"><h2>Record</h2></div>
+      <div class="kv" style="grid-template-columns:auto 1fr;margin:0 8px">
+        <span class="muted">Status</span><span><span class="lamp {{ 'green' if log.status == 'closed' else 'amber' }}"></span> {{ log.status | upper }}</span>
+        <span class="muted">Responsible officer</span><span>{{ log.officer_name or '—' }}</span>
+        <span class="muted">Closure time (ship)</span><span class="mono">{{ (log.closed_at or '—') | replace('T', ' ') }}</span>
+        <span class="muted">Recorded by PC at</span><span class="mono">{{ (log.closed_recorded_at or '—')[:16] | replace('T', ' ') }}</span>
+        <span class="muted">Readings</span><span>{{ st.totals.entered }} entered · {{ st.totals.missing }} missing · {{ st.totals.unavailable }} unavailable · {{ st.totals.review }} for review</span>
+        <span class="muted">Remarks</span><span style="white-space:pre-wrap">{{ log.remarks or '—' }}</span>
+      </div>
+    </section>
+    <section class="plate">
+      <div class="plate-head"><h2>Versions</h2></div>
+      <table class="log">
+        {% for v in versions %}
+        <tr {% if v.id == log.id %}class="sel"{% endif %}>
+          <td><a href="{{ url_for('watchlog.record', log_id=v.id) }}">v{{ v.version }}</a></td>
+          <td>{{ v.status }}{% if v.id == effective_id %} · <b>current</b>{% endif %}</td>
+          <td class="mono">{{ (v.closed_at or '')[:16] | replace('T', ' ') }}</td>
+          <td class="muted">{{ v.correction_reason or '' }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% if log.status == 'closed' and log.id == effective_id %}
+        {% if draft %}
+          <p style="margin:12px 8px 0">Correction v{{ draft.version }} in progress.
+            <a href="{{ url_for('watchlog.entry', ship_date=log.ship_date, watch=log.watch) }}">Continue ›</a></p>
+          <form method="post" action="{{ url_for('watchlog.discard', ship_date=log.ship_date, watch=log.watch) }}" style="margin:8px"
+                onsubmit="return confirm('Discard the correction draft? The closed record is not affected.')">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="btn ghost" type="submit">Discard correction draft</button></form>
+        {% else %}
+          <form method="post" action="{{ url_for('watchlog.correct', ship_date=log.ship_date, watch=log.watch) }}" class="inline-form" style="margin-top:12px">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+            <label class="field">Reason for correction (required)<input name="reason" maxlength="300" required></label>
+            <button class="btn" type="submit">Start correction</button>
+          </form>
+        {% endif %}
+      {% endif %}
+      {% if log.status == 'closed' %}
+      <p class="muted" style="font-size:12px;margin:12px 8px 0">PDF: <span class="mono">{{ pdf.filename if pdf else 'not generated yet' }}</span></p>
+      <form method="post" action="{{ url_for('watchlog.regenerate_pdf', log_id=log.id) }}" style="margin:6px 8px 0">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="btn ghost" type="submit" style="min-height:32px;font-size:12px">Regenerate PDF</button></form>
+      {% endif %}
+    </section>
+  </div>
+
+  {% for sec in layout.sections %}
+  {% set items = st['items'] | selectattr('section', 'equalto', sec.id) | rejectattr('hidden') | list %}
+  {% if items %}
+  <section class="plate" style="margin-top:18px">
+    <div class="plate-head"><h2>{{ sec.id }} · {{ sec.title }}</h2></div>
+    <table class="log">
+      <tr><th>Equipment</th><th>Unit</th><th style="text-align:right">Previous</th><th style="text-align:right">Reading</th><th style="text-align:right">Difference</th><th>Status</th></tr>
+      {% for i in items %}
+      {% set f = layout.fields[i.field] %}
+      <tr>
+        <td>{{ f.label }}{% if i.slot != 'watch' %} <span class="muted">@ {{ i.slot }}{{ ' (= 6h reading)' if i.linked }}</span>{% endif %}</td>
+        <td class="muted">{{ f.unit or ('unconfirmed') }}</td>
+        <td class="mono" style="text-align:right">{{ i.prev | num if i.prev is not none else '—' }}</td>
+        <td class="mono" style="text-align:right">
+          {% if i.state == 'entered' %}{{ i.raw or (i.value | num) }}
+          {% elif i.state == 'unavailable' %}<span style="color:var(--lamp-amber)">UNAVAILABLE</span>
+          {% else %}<span style="color:var(--lamp-red)">MISSING</span>{% endif %}</td>
+        <td class="mono" style="text-align:right">{% if i.diff is not none and f.kind in ('counter','hours_counter','cycle_counter') %}{{ '+' if i.diff >= 0 }}{{ i.diff | num }} {{ f.diff_unit }}{% endif %}</td>
+        <td><span class="lamp {{ i.lamp }}"></span>
+          <span class="muted">{% if i.state == 'unavailable' %}{{ i.reason }}{% elif i.diff_status == 'review' %}review{% elif i.diff_status == 'incomplete' and i.state == 'entered' %}incomplete interval{% elif i.diff_note %}{{ i.diff_note }}{% elif i.prev_note == 'opening balance' %}opening balance{% endif %}</span></td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% if sec.id == 'B' %}{% set c = st.calcs.fw_total_production %}
+      <div class="calc-row">Total production this watch <b class="{{ 'calc-incomplete' if c.status != 'ok' }}">{{ (c.value | num) ~ ' m³' if c.status == 'ok' else 'INCOMPLETE' }}</b></div>{% endif %}
+    {% if sec.id == 'M' %}{% set c = st.calcs.m4_total %}
+      <div class="calc-row">M4 TOTAL <b class="{{ 'calc-incomplete' if c.status != 'ok' }}">{{ c.value | num if c.status == 'ok' else 'INCOMPLETE' }}</b></div>{% endif %}
+  </section>
+  {% endif %}
+  {% endfor %}
+</main>
+{% endblock %}

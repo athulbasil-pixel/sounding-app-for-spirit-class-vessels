@@ -9,7 +9,7 @@ from flask import Flask
 
 from . import db
 
-__version__ = "0.1.0-phase1"
+__version__ = "0.2.0-phase2"
 
 
 def default_data_dir() -> Path:
@@ -21,7 +21,7 @@ def default_data_dir() -> Path:
     return Path(base) / "MarineSense" / "WatchLog"
 
 
-def create_app(data_dir: str | Path | None = None, testing: bool = False) -> Flask:
+def create_app(data_dir: str | Path | None = None, testing: bool = False, lan: bool = False) -> Flask:
     data = Path(data_dir) if data_dir else default_data_dir()
     data.mkdir(parents=True, exist_ok=True)
     key_file = data / "secret.key"
@@ -35,10 +35,14 @@ def create_app(data_dir: str | Path | None = None, testing: bool = False) -> Fla
         SECRET_KEY=key_file.read_text(encoding="utf-8").strip(),
         TESTING=testing,
         JSON_SORT_KEYS=False,
+        LAN_MODE=lan,
+        SESSION_COOKIE_SAMESITE="Strict",
+        SESSION_COOKIE_HTTPONLY=True,
     )
     db.init_db(app.config["DATABASE"])
     app.teardown_appcontext(db.close_db)
 
     from .views import bp
+    from . import records  # noqa: F401  (registers Phase 2 routes on bp)
     app.register_blueprint(bp)
     return app
