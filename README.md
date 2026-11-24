@@ -2,17 +2,27 @@
 
 This app replaces the Excel engine-room watch and sounding workbook with an offline browser app built on Flask and SQLite.
 
-**Status: Phase 3: watch entry, close, history, corrections, PDF, tablet (LAN) mode and reports.** Phase 4 (backups, offline installer, hardening) is next.
+**Version 1.0.0**: watch entry, close, history, corrections, PDF, reports, backups, training mode and tablet (LAN) mode. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Start (Windows)
 
 1. Install **Python 3.11 or newer** from python.org and tick *Add Python to PATH*.
 2. Double-click **`START_WATCHLOG_WINDOWS.bat`**.
-   - The first run creates `.venv` and installs Flask, PyYAML and fpdf2. After an update that adds packages, it installs them automatically. This needs internet once, unless a `wheels\` folder with the packages sits next to the script.
+   - The first run creates `.venv` and installs Flask, PyYAML, fpdf2 and waitress. After an update that adds packages, it installs them automatically. This needs internet once, unless a `wheels\` folder with the packages sits next to the script.
    - After that the app starts offline and opens **http://127.0.0.1:5080/** in your browser.
 3. Keep the black console window open while using the log. Close it, or press Ctrl+C, to stop.
 
 To use tablets on the ship's network, see *Tablet access* below.
+
+| Script | What it does |
+|---|---|
+| `START_WATCHLOG_WINDOWS.bat` | Normal use at the ECR PC |
+| `START_WATCHLOG_LAN_WINDOWS.bat` | Same, plus PIN-protected access for tablets |
+| `START_WATCHLOG_DEMO_WINDOWS.bat` | **Training mode** with synthetic data in a separate folder, on http://127.0.0.1:5081/ |
+| `BUILD_OFFLINE_BUNDLE_WINDOWS.bat` | Downloads all packages into `wheels\` so a ship PC can install without internet |
+| `TEST_WATCHLOG_WINDOWS.bat` | Runs the automated tests |
+
+Double-clicking START again while the app is running just opens the browser; it never starts a second copy.
 
 Your entries are saved in `%LOCALAPPDATA%\MarineSense\WatchLog\watchlog.sqlite3`. They survive closing the browser, closing the app and restarting the PC.
 
@@ -56,6 +66,25 @@ To run the tests, double-click `TEST_WATCHLOG_WINDOWS.bat`, or run `.venv\Script
   - Watches before the first record or after the latest one count as not yet recorded, not as gaps.
 - **CSV export:** totals for all periods, and every watch interval of the month (opens in Excel).
 
+## What Phase 4 adds: backups, training and hardening
+
+- **Backups** (Settings → Backups & restore):
+  - Automatic backups run once a day on start and after every closed watch. The newest 60 automatic backups are kept; manual backups are never deleted.
+  - **Backup now**, **Download full backup** (a .zip of the database and all PDFs), and **Copy to a folder** such as a USB drive.
+- **Restore** from a saved backup or an uploaded file. You must type `RESTORE` to confirm.
+  - The current database is saved as a *pre-restore* backup first, so a restore can be undone.
+  - Files are checked for integrity before use.
+  - Backups and restores only work on the ECR PC, never from a tablet.
+- **Training mode:** a separate folder with 14 days of synthetic watches and a striped **TRAINING MODE** banner. It refuses to run on a folder that holds a real log.
+- **Offline installation:** run `BUILD_OFFLINE_BUNDLE_WINDOWS.bat` on a PC with internet and the **same Python version** as the ship PC, then copy the whole folder, including `wheels\`, to the ship.
+- **Hardening:**
+  - A production web server (waitress) replaces Flask's development server.
+  - A second start just opens the running app.
+  - A `/health` check, a rotating log in `%LOCALAPPDATA%\MarineSense\WatchLog\logs\`, and friendly error pages.
+- **Accessibility:** a skip-to-content link, page landmarks, a live "saved" status for screen readers, visible keyboard focus, reduced motion when the PC asks for it, and lamps that stay visible in high-contrast mode.
+
+**Still deferred until confirmed onboard:** generator running hours, sludge generation and sounding-to-volume conversions. The raw readings are stored so they can be added later.
+
 ## Tablet access (LAN, opt-in)
 
 1. On the ECR PC, open **Settings → Tablet access** and set a 4–12 digit PIN. The PIN can only be changed on the ECR PC itself.
@@ -68,7 +97,7 @@ The connection is plain HTTP, so use it only on the ship's internal network. In 
 
 | Path | Contents |
 |---|---|
-| `watchlog/` | The Flask app: `logic.py` (rules and calculations), `records.py` (close, corrections, history, PDF and LAN), `reports.py` and `report_views.py` (period totals and CSV), `pdf.py`, `registry.py`, `db.py`, `views.py`, templates and static files |
+| `watchlog/` | The Flask app: `logic.py` (rules and calculations), `records.py` (close, corrections, history, PDF and LAN), `reports.py` and `report_views.py` (period totals and CSV), `backup.py` and `backup_views.py` (backups and restore), `demo.py` (synthetic training data), `pdf.py`, `registry.py`, `db.py`, `views.py`, templates and static files |
 | `docs/field_registry.yaml` | Every workbook field. The entry screen and calculations are built from this file |
 | `docs/data_model.md` | Schema and calculation rules |
 | `docs/WATCHLOG_BUILD_PROMPT.md` | Build brief, phase plan and approved design decisions |

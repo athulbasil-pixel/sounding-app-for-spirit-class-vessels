@@ -11,6 +11,8 @@
 {% block head %}{% endblock %}
 </head>
 <body data-page="{% block page %}{% endblock %}">
+<a class="skip" href="#main">Skip to content</a>
+{% if demo_mode %}<div class="demo-banner" role="note">TRAINING MODE · synthetic data · nothing here is a real watch record</div>{% endif %}
 <header class="brandbar">
   <a href="{{ url_for('watchlog.home') }}"><img class="logo" src="{{ url_for('static', filename='brand/marinesense-logo.png') }}" alt="MarineSense"></a>
   <div class="app-title"><b>Engine Room Watch Log</b><span>Spirit class · v{{ app_version }}</span></div>

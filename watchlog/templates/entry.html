@@ -33,11 +33,11 @@
   </div>
   <div style="margin-left:auto;text-align:right">
     <div class="lbl">Status</div>
-    <div style="display:flex;gap:8px;align-items:center;font-size:15px"><span class="lamp amber" data-status-lamp></span><b data-status>DRAFT</b> · <span class="muted" data-saved>loading…</span></div>
+    <div style="display:flex;gap:8px;align-items:center;font-size:15px"><span class="lamp amber" data-status-lamp></span><b data-status>DRAFT</b> · <span class="muted" data-saved role="status" aria-live="polite">loading…</span></div>
   </div>
 </div>
 
-<main class="page">
+<main id="main" class="page">
   {% if log.version > 1 %}
   <div class="banner">Correction draft <b>v{{ log.version }}</b> — reason: “{{ log.correction_reason }}”. The closed original stays unchanged until this correction is closed.
     <a href="{{ url_for('watchlog.record', log_id=log.supersedes_id) }}">View closed record</a></div>

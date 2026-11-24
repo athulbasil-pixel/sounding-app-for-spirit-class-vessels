@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Backups{% endblock %}
+{% block page %}settings{% endblock %}
+{% block body %}
+<main class="page" id="main" style="max-width:1150px">
+  <h1 class="pagetitle">Backups</h1>
+  <p class="muted" style="margin-top:-8px">
+    The app backs up automatically once a day and after every closed watch (newest {{ keep }} kept).
+    Copy a backup off this PC regularly, for example to a USB stick.
+  </p>
+
+  <div class="grid2" style="margin:0 0 18px">
+    <section class="plate">
+      <div class="plate-head"><h2>Make &amp; copy</h2></div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;padding:0 8px 12px">
+        <form method="post" action="{{ url_for('watchlog.backup_now') }}"><input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button class="btn primary" type="submit">Backup now</button></form>
+        <a class="btn" href="{{ url_for('watchlog.backup_zip') }}">Download full backup (database + PDFs, .zip)</a>
+      </div>
+      <form method="post" action="{{ url_for('watchlog.backup_copy') }}" class="inline-form">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <label class="field">Copy the newest backup to a folder, for example a USB drive such as E:\
+          <input name="folder" class="mono" placeholder="E:\" required></label>
+        <button class="btn" type="submit">Copy</button>
+      </form>
+      <p class="muted" style="font-size:12px;margin:10px 8px 0">Data folder: <span class="mono">{{ data_dir }}</span></p>
+    </section>
+
+    <section class="plate">
+      <div class="plate-head"><h2>Restore from file</h2><span class="tag">replaces current data</span></div>
+      <form method="post" action="{{ url_for('watchlog.backup_restore') }}" enctype="multipart/form-data"
+            style="display:flex;flex-direction:column;gap:12px;padding:0 8px">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <label class="field">Backup file: a .sqlite3 backup, or watchlog.sqlite3 taken out of a full-backup zip
+          <input type="file" name="file" accept=".sqlite3,.db" required></label>
+        <label class="field">Type <b>RESTORE</b> to confirm
+          <input name="confirm" autocomplete="off" required></label>
+        <button class="btn" type="submit">Restore</button>
+        <p class="muted" style="font-size:12px;margin:0">The current database is saved as a <i>pre-restore</i> backup first, so a restore can be undone.</p>
+      </form>
+    </section>
+  </div>
+
+  <section class="plate">
+    <div class="plate-head"><h2>Saved backups · {{ backups|length }}</h2></div>
+    {% if backups %}
+    <table class="log">
+      <tr><th scope="col">Created</th><th scope="col">Type</th><th scope="col">Size</th><th scope="col">Download</th><th scope="col">Restore this backup</th></tr>
+      {% for b in backups %}
+      <tr>
+        <td class="mono">{{ b.created.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        <td>{{ {'daily': 'automatic (daily)', 'close': 'automatic (watch closed)', 'manual': 'manual', 'pre-restore': 'before a restore'}.get(b.reason, b.reason) }}</td>
+        <td class="mono">{{ '%.0f' % (b.size / 1024) }} KB</td>
+        <td><a href="{{ url_for('watchlog.backup_download', name=b.name) }}">{{ b.name }}</a></td>
+        <td>
+          <form method="post" action="{{ url_for('watchlog.backup_restore') }}" style="display:flex;gap:6px;align-items:center">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="name" value="{{ b.name }}">
+            <input name="confirm" placeholder="type RESTORE" aria-label="Type RESTORE to restore {{ b.name }}" autocomplete="off" style="width:130px" class="mono">
+            <button class="btn ghost" type="submit" style="min-height:34px">Restore</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}<p class="muted" style="margin:0 8px">No backups yet.</p>{% endif %}
+  </section>
+</main>
+{% endblock %}

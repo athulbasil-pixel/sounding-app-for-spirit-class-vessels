@@ -28,7 +28,8 @@ def csrf_token() -> str:
 @bp.app_context_processor
 def inject():
     return {"csrf_token": csrf_token, "WATCH_LABELS": WATCH_LABELS, "WATCHES": WATCHES,
-            "app_version": __version__, "vessel_name": vessel_name()}
+            "app_version": __version__, "vessel_name": vessel_name(),
+            "demo_mode": current_app.config.get("DEMO", False)}
 
 
 @bp.app_template_filter("num")

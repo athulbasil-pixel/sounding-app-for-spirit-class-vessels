@@ -19,7 +19,7 @@
   </div>
 </div>
 
-<main class="page" style="max-width:1200px">
+<main id="main" class="page" style="max-width:1200px">
   {% if log.version > 1 %}
   <div class="banner"><b>Corrected record (version {{ log.version }}).</b> Reason: “{{ log.correction_reason }}” · correction started {{ (log.correction_created_at or '')[:16] | replace('T', ' ') }}.
     The earlier version is kept below under Versions.</div>

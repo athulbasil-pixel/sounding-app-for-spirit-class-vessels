@@ -14,7 +14,7 @@
       <option value="{{ v }}" {% if (status or '') == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
   <button class="btn" type="submit" style="align-self:flex-end">Search</button>
 </form>
-<main class="page" style="max-width:1200px">
+<main id="main" class="page" style="max-width:1200px">
   <section class="plate">
     <div class="plate-head"><h2>Watch records · {{ rows|length }}</h2></div>
     {% if rows %}

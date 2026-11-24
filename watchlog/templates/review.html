@@ -9,7 +9,7 @@
   <div style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="lamp amber"></span>Draft{% if log.saved_at %} · saved {{ log.saved_at[11:16] }}{% endif %}</div>
 </div>
 
-<main class="page" style="max-width:1150px">
+<main id="main" class="page" style="max-width:1150px">
   {% if log.version > 1 %}
   <div class="banner">Correcting the closed record. Reason: “{{ log.correction_reason }}”. The original version stays unchanged; closing creates version {{ log.version }}.</div>
   {% endif %}

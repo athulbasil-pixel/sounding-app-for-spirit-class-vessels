@@ -2,8 +2,9 @@
 {% block title %}Settings{% endblock %}
 {% block page %}settings{% endblock %}
 {% block body %}
-<main class="page" style="max-width:1200px">
+<main id="main" class="page" style="max-width:1200px">
   <h1 class="pagetitle">Settings</h1>
+  <p style="margin:-6px 0 16px"><a class="btn" href="{{ url_for('watchlog.backups_page') }}">Backups &amp; restore ›</a></p>
 
   <section class="plate" style="margin-bottom:18px">
     <div class="plate-head"><h2>Vessel</h2></div>

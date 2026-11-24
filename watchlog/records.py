@@ -146,6 +146,12 @@ def close(ship_date, watch):
         conn.execute("ROLLBACK")
         flash(f"Not closed: {e}")
         return redirect(url_for("watchlog.review", ship_date=ship_date, watch=watch))
+    current_app.logger.info("closed %s %s v%s by %s", ship_date, watch, log["version"], log["officer_name"])
+    try:
+        from .backup import make_backup
+        make_backup(current_app.config["DATA_DIR"], current_app.config["DATABASE"], "close")
+    except Exception:                       # a failed backup must not block closing; it is logged
+        current_app.logger.exception("backup after close failed")
     try:
         _store_pdf(conn, log)
         flash("Watch closed. PDF generated.")

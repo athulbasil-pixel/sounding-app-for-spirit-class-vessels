@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block page %}error{% endblock %}
+{% block body %}
+<main class="page" id="main" style="max-width:560px;margin-top:40px">
+  <section class="plate">
+    <div class="plate-head"><span class="lamp {{ 'red' if code == 500 else 'amber' }}"></span><h2>{{ code }} · {{ title }}</h2></div>
+    <p style="margin:0 8px 14px">{{ message }}</p>
+    <div style="padding:0 8px"><a class="btn primary" href="{{ url_for('watchlog.home') }}">Go to the Watch board</a></div>
+  </section>
+</main>
+{% endblock %}

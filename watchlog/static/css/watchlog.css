@@ -399,3 +399,13 @@ table.report .rval.inc { color: var(--lamp-amber); }
 table.report .gapnote { flex-basis: 100%; text-align: right; font-size: 11px; color: var(--lamp-amber); }
 table.report tr.composite td { border-top: 1px dashed var(--plate-edge); font-weight: 600; }
 @media (max-width: 1000px) { .period-strip { grid-template-columns: repeat(2, 1fr); } }
+
+/* ================= Phase 4: accessibility & training banner ================= */
+.skip { position: absolute; left: -9999px; top: 6px; z-index: 50; padding: 10px 14px; border-radius: 6px;
+  background: var(--brand-yellow); color: #1b1600; font-weight: 700; }
+.skip:focus { left: 10px; }
+.demo-banner { position: sticky; top: 0; z-index: 25; text-align: center; padding: 6px 12px; font-weight: 700;
+  letter-spacing: .08em; font-size: 13px; color: #1b1600;
+  background: repeating-linear-gradient(135deg, #f6c400 0 18px, #ffd84d 18px 36px); }
+.demo-banner + .brandbar { top: 31px; }
+@media (forced-colors: active) { .lamp { forced-color-adjust: none; border: 1px solid CanvasText; } }
